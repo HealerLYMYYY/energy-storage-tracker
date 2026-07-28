@@ -128,13 +128,24 @@ def ranking_chart(rankings):
     return fig
 
 
+def hex_to_rgba(hex_color, alpha=0.2):
+    """将 #RRGGBB 转为 rgba(r,g,b,a)"""
+    hex_color = hex_color.lstrip('#')
+    if len(hex_color) == 3:
+        hex_color = ''.join([c*2 for c in hex_color])
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
+
 def company_trend_chart(data, periods, color, label="出货量(GWh)", y_key="total"):
     """单公司趋势图"""
     vals = [data.get(y, {}).get(y_key) for y in periods]
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=periods, y=vals, name=label,
                              line=dict(color=color, width=3), mode="lines+markers",
-                             fill="tozeroy", fillcolor=f"{color}20", marker=dict(size=6)))
+                             fill="tozeroy", fillcolor=hex_to_rgba(color, 0.2), marker=dict(size=6)))
     fig.update_layout(margin=dict(l=20, r=20, t=10, b=20),
                       plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
     return fig
