@@ -1,4 +1,4 @@
-"""Login — Institutional Grade"""
+"""登录页 — 机构级"""
 
 import streamlit as st
 from utils.auth import authenticate, init_auth
@@ -19,7 +19,7 @@ def show_login():
     <div class="login-card">
         <div style="text-align:center;margin-bottom:28px;">
             <div style="font-size:2rem;color:#c9a96e;margin-bottom:4px;">◈</div>
-            <div style="font-size:1.1rem;font-weight:600;color:#e6edf3;letter-spacing:0.03em;">Energy Storage CI</div>
+            <div style="font-size:1.1rem;font-weight:600;color:#e6edf3;letter-spacing:0.03em;">光储竞争情报</div>
             <div style="font-size:0.65rem;color:#8b949e;text-transform:uppercase;letter-spacing:0.1em;margin-top:4px;">Competitive Intelligence Platform</div>
         </div>
     </div>""", unsafe_allow_html=True)
@@ -27,13 +27,13 @@ def show_login():
     _, col, _ = st.columns([1, 1.5, 1])
     with col:
         with st.form("login_form"):
-            username = st.text_input("Username", placeholder="Enter username")
-            password = st.text_input("Password", type="password", placeholder="Enter password")
-            submitted = st.form_submit_button("Sign In", use_container_width=True, type="primary")
+            username = st.text_input("用户名", placeholder="请输入用户名")
+            password = st.text_input("密码", type="password", placeholder="请输入密码")
+            submitted = st.form_submit_button("登录", use_container_width=True, type="primary")
 
             if submitted:
                 if not username or not password:
-                    st.error("Please enter credentials")
+                    st.error("请输入用户名和密码")
                 else:
                     user = authenticate(username, password)
                     if user:
@@ -41,7 +41,7 @@ def show_login():
                         st.session_state.user = user
                         st.rerun()
                     else:
-                        st.error("Invalid credentials")
+                        st.error("用户名或密码错误")
 
     st.markdown("""<div style="text-align:center;font-size:0.6rem;color:#30363d;margin-top:24px;text-transform:uppercase;letter-spacing:0.08em;">
-    Authorized Personnel Only · Default: admin / admin123</div>""", unsafe_allow_html=True)
+    仅限授权人员 · 默认账号：admin / admin123</div>""", unsafe_allow_html=True)

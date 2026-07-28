@@ -1,4 +1,4 @@
-"""Industry Rankings — Infolink Global ESS Integrator Ranking · 2026E Edition"""
+"""行业排名 — Infolink 全球储能集成商排名 · 2026E 预测版"""
 
 import streamlit as st
 import pandas as pd
@@ -8,18 +8,18 @@ from utils.visualization import ranking_chart
 
 
 def show_ranking():
-    st.markdown('<h1>Industry Rankings</h1>', unsafe_allow_html=True)
-    st.caption("Infolink Global ESS Integrator Ranking · DC + AC Combined (GWh)")
+    st.markdown('<h1>行业排名</h1>', unsafe_allow_html=True)
+    st.caption("Infolink 全球储能系统集成商排名 · 直流 + 交流侧合计 (GWh)")
 
     rankings = get_rankings()
     if not rankings:
-        st.info("No ranking data available")
+        st.info("暂无排名数据")
         return
 
     fig = ranking_chart(rankings)
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    st.markdown('<h3>Detailed Ranking Data</h3>', unsafe_allow_html=True)
+    st.markdown('<h3>详细排名数据</h3>', unsafe_allow_html=True)
     rows = []
     for i, r in enumerate(rankings):
         g_25 = ((r.get("year_2025") or 0) - (r.get("year_2024") or 0)) / (r.get("year_2024") or 1) * 100 if r.get("year_2024") else 999
@@ -27,33 +27,32 @@ def show_ranking():
         rank_str = f"#{i+1}"
 
         row = {
-            "Rank": rank_str, "Company": r["company_name"],
+            "排名": rank_str, "公司": r["company_name"],
             "2024 (GWh)": f'{r.get("year_2024", 0):.1f}',
             "2025 (GWh)": f'{r.get("year_2025", 0):.1f}',
-            "Growth 25": f'{g_25:.1f}%' if g_25 < 999 else "NEW",
+            "2025 增速": f'{g_25:.1f}%' if g_25 < 999 else "NEW",
         }
 
-        # Add 2026E column if available
         if r.get("year_2026") is not None:
             row["2026E (GWh)"] = f'{r.get("year_2026", 0):.1f}'
-            row["Growth 26"] = f'{g_26:.1f}%' if g_26 < 999 else "NEW"
+            row["2026 增速"] = f'{g_26:.1f}%' if g_26 < 999 else "NEW"
 
         row.update({
-            "Americas": f'{r.get("americas", 0):.1f}',
+            "美洲": f'{r.get("americas", 0):.1f}',
             "EMEA": f'{r.get("emea", 0):.1f}',
-            "China": f'{r.get("china", 0):.1f}',
-            "APAC": f'{r.get("asia_pacific", 0):.1f}',
+            "中国": f'{r.get("china", 0):.1f}',
+            "亚太": f'{r.get("asia_pacific", 0):.1f}',
         })
         rows.append(row)
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
-    st.markdown('<h3>Regional Shipment Mix · 2026E</h3>', unsafe_allow_html=True)
-    regions = {"Americas": 0, "EMEA": 0, "China": 0, "APAC": 0}
+    st.markdown('<h3>区域出货结构 · 2026E</h3>', unsafe_allow_html=True)
+    regions = {"美洲": 0, "EMEA": 0, "中国": 0, "亚太": 0}
     for r in rankings:
-        regions["Americas"] += r.get("americas") or 0
+        regions["美洲"] += r.get("americas") or 0
         regions["EMEA"] += r.get("emea") or 0
-        regions["China"] += r.get("china") or 0
-        regions["APAC"] += r.get("asia_pacific") or 0
+        regions["中国"] += r.get("china") or 0
+        regions["亚太"] += r.get("asia_pacific") or 0
 
     fig_pie = px.pie(values=list(regions.values()), names=list(regions.keys()),
                      color_discrete_sequence=["#c9a96e", "#5b8db8", "#b8956a", "#7aa3c4"])
