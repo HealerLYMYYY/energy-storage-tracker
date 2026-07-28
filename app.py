@@ -83,7 +83,12 @@ input:focus, select:focus { border-color: #c9a96e !important; box-shadow: 0 0 0 
 
 
 def main():
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        st.error(f"数据库初始化失败: {e}")
+        return
+
     init_auth()
 
     if not st.session_state.authenticated:
@@ -96,7 +101,7 @@ def main():
     if not PG_AVAILABLE and USE_PG:
         st.warning(f"⚠️ PostgreSQL 连接失败，已自动降级到本地 SQLite。数据不会跨设备同步。\n\n> 错误：`{PG_ERROR_MSG}`")
     elif not USE_PG:
-        st.info("💡 未配置 DATABASE_URL，使用本地 SQLite。配置 Supabase 后可实现数据持久化和多设备同步。")
+        st.info("💡 未配置 DATABASE_URL 或连接失败，使用本地 SQLite。配置正确的 Supabase 后可实现数据持久化和多设备同步。")
 
     render_sidebar()
     render_content()

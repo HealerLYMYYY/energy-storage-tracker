@@ -1,7 +1,6 @@
 """
-光储竞对分析系统 - 数据库模块 (双模式: SQLite开发 / PostgreSQL生产)
-环境变量 DATABASE_URL 为空时使用本地 SQLite，否则尝试 PostgreSQL
-PostgreSQL 连接失败时自动降级到 SQLite，保证页面不崩溃
+光储竞对分析系统 - 数据库模块
+优先 PostgreSQL（配置 DATABASE_URL 时），连接失败自动降级 SQLite
 """
 
 import os
@@ -13,34 +12,55 @@ DB_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 DB_PATH = os.path.join(DB_DIR, "energy_storage.db")
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
-# ——— 智能检测：先尝试连接 PostgreSQL，失败则降级 ———
 USE_PG = False
 PG_AVAILABLE = False
 PG_ERROR_MSG = None
 
-if DATABASE_URL:
+
+def _test_pg_connection(url, timeout=3):
+    """尝试连接 PostgreSQL，成功返回 True，失败返回错误信息"""
     try:
         import psycopg2
         import psycopg2.extras
-        # 快速连接测试（3秒超时）
-        test_conn = psycopg2.connect(DATABASE_URL, connect_timeout=3)
-        test_conn.close()
-        USE_PG = True
-        PG_AVAILABLE = True
-        print(f"[DB] PostgreSQL 连接成功 ✓")
+        conn = psycopg2.connect(url, connect_timeout=timeout)
+        conn.close()
+        return True, None
     except Exception as e:
-        USE_PG = False
-        PG_AVAILABLE = False
-        PG_ERROR_MSG = str(e)
-        print(f"[DB] PostgreSQL 连接失败，降级到 SQLite: {PG_ERROR_MSG}")
+        return False, str(e)
 
 
 def init_db():
-    """初始化数据库 + 建表 + 种子数据"""
-    if USE_PG:
-        _init_pg()
-    else:
+    """初始化数据库。优先 PG，失败则降级 SQLite（永不崩溃）"""
+    global USE_PG, PG_AVAILABLE, PG_ERROR_MSG
+
+    if DATABASE_URL:
+        ok, err = _test_pg_connection(DATABASE_URL)
+        if ok:
+            USE_PG = True
+            PG_AVAILABLE = True
+            PG_ERROR_MSG = None
+            try:
+                _init_pg()
+                print("[DB] PostgreSQL 数据库就绪 ✓")
+                return
+            except Exception as e:
+                PG_AVAILABLE = False
+                PG_ERROR_MSG = f"PG 初始化失败: {e}"
+                print(f"[DB] {PG_ERROR_MSG}")
+        else:
+            USE_PG = False
+            PG_AVAILABLE = False
+            PG_ERROR_MSG = f"PG 连接失败: {err}"
+            print(f"[DB] {PG_ERROR_MSG}")
+
+    # 降级到 SQLite
+    USE_PG = False
+    try:
         _init_sqlite()
+        print("[DB] SQLite 数据库就绪（降级模式）")
+    except Exception as e:
+        # 如果连 SQLite 都失败，也抛出，但这种情况极少
+        raise RuntimeError(f"数据库初始化完全失败: {e}") from e
 
 
 # ============================================================
