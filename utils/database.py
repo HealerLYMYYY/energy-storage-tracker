@@ -17,7 +17,21 @@ PG_AVAILABLE = False
 PG_ERROR_MSG = None
 
 
-def _test_pg_connection(url, timeout=3):
+def _fix_pg_url(url):
+    """自动修正常见的连接字符串格式问题"""
+    # 去掉密码周围的方括号 [password] -> password
+    import re
+    url = re.sub(r'\[([^\]]+)\]', r'\1', url)
+    # 自动加 sslmode
+    if 'sslmode' not in url and 'supabase' in url:
+        if '?' in url:
+            url += '&sslmode=require'
+        else:
+            url += '?sslmode=require'
+    return url
+
+
+def _test_pg_connection(url, timeout=8):
     """尝试连接 PostgreSQL，成功返回 True，失败返回错误信息"""
     try:
         import psycopg2
@@ -34,7 +48,8 @@ def init_db():
     global USE_PG, PG_AVAILABLE, PG_ERROR_MSG
 
     if DATABASE_URL:
-        ok, err = _test_pg_connection(DATABASE_URL)
+        url = _fix_pg_url(DATABASE_URL)
+        ok, err = _test_pg_connection(url, timeout=8)
         if ok:
             USE_PG = True
             PG_AVAILABLE = True
@@ -156,7 +171,8 @@ def _init_pg():
 
 @contextmanager
 def _get_pg():
-    conn = psycopg2.connect(DATABASE_URL)
+    url = _fix_pg_url(DATABASE_URL)
+    conn = psycopg2.connect(url, connect_timeout=10)
     conn.autocommit = False
     conn.cursor_factory = psycopg2.extras.RealDictCursor
     try:
@@ -234,7 +250,8 @@ def get_connection():
     PostgreSQL 连接失败时自动降级到 SQLite"""
     if USE_PG:
         try:
-            conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
+            url = _fix_pg_url(DATABASE_URL)
+            conn = psycopg2.connect(url, connect_timeout=5)
             conn.autocommit = False
             conn.cursor_factory = psycopg2.extras.RealDictCursor
             try:
