@@ -1,10 +1,10 @@
 """
-光储竞争情报系统 — 机构级仪表盘
+光储竞争情报系统 - 机构级仪表盘
 """
 
 import streamlit as st
 
-st.set_page_config(page_title="光储竞争情报", page_icon="?", layout="wide",
+st.set_page_config(page_title="光储竞争情报", page_icon="*", layout="wide",
                    initial_sidebar_state="expanded")
 
 from utils.database import init_db, PG_AVAILABLE, PG_ERROR_MSG, USE_PG
@@ -99,9 +99,9 @@ def main():
 
     # 数据库状态提示
     if not PG_AVAILABLE and USE_PG:
-        st.warning(f"?? PostgreSQL 连接失败，已自动降级到本地 SQLite。数据不会跨设备同步。\n\n> 错误：`{PG_ERROR_MSG}`")
+        st.warning(f"注意：PostgreSQL 连接失败，已自动降级到本地 SQLite。数据不会跨设备同步。\n\n> 错误：`{PG_ERROR_MSG}`")
     elif not USE_PG:
-        st.info("? 未配置 DATABASE_URL 或连接失败，使用本地 SQLite。配置正确的 Supabase 后可实现数据持久化和多设备同步。")
+        st.info("提示：未配置 DATABASE_URL 或连接失败，使用本地 SQLite。配置正确的 Supabase 后可实现数据持久化和多设备同步。")
 
     render_sidebar()
     render_content()
@@ -115,7 +115,7 @@ def render_sidebar():
         # 品牌
         st.markdown(f"""
         <div style="padding: 12px 8px 16px 8px; border-bottom: 1px solid #21262d; margin-bottom: 12px;">
-            <div style="font-size: 0.95rem; font-weight: 600; color: #e6edf3; letter-spacing: 0.02em;">? 光储竞争情报</div>
+            <div style="font-size: 0.95rem; font-weight: 600; color: #e6edf3; letter-spacing: 0.02em;">光储竞争情报</div>
             <div style="font-size: 0.65rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px;">Competitive Intelligence</div>
         </div>""", unsafe_allow_html=True)
 
@@ -156,7 +156,7 @@ def render_sidebar():
         # 底部
         st.markdown(f"""
         <div style="position:fixed;bottom:16px;left:16px;font-size:0.58rem;color:#30363d;text-transform:uppercase;letter-spacing:0.08em;">
-            v3.0 · 2026E · 内部资料
+            v3.0 | 2026E | 内部资料
         </div>""", unsafe_allow_html=True)
 
         st.divider()
