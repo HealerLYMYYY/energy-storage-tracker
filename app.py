@@ -53,7 +53,7 @@ h3 { font-size: 0.95rem !important; text-transform: uppercase; letter-spacing: 0
     transition: all 0.15s;
 }
 [data-testid="stSidebar"] .stButton > button:hover { background: #161b22; color: #c9a96e; }
-[data-testid="stSidebar"] .stButton > button:has(div p:contains("?")) { color: #c9a96e; background: rgba(201,169,110,0.08); }
+[data-testid="stSidebar"] .stButton > button:has(div p:contains(">")) { color: #c9a96e; background: rgba(201,169,110,0.08); }
 
 /* 按钮 */
 .stButton > button { border-radius: 4px; font-weight: 500; font-size: 0.82rem; letter-spacing: 0.02em; }
@@ -129,20 +129,20 @@ def render_sidebar():
         # 导航
         sections = [
             ("分析", [
-                ("? 仪表盘", "dashboard"),
+                ("> 仪表盘", "dashboard"),
                 ("  公司视图", "company"),
                 ("  同业对比", "compare"),
             ]),
             ("市场情报", [
-                ("? 行业排名", "ranking"),
+                ("> 行业排名", "ranking"),
                 ("  宏观与产业链", "industry"),
             ]),
             ("数据操作", [
-                ("? 数据录入", "data_entry"),
+                ("> 数据录入", "data_entry"),
             ]),
         ]
         if user["role"] == "admin":
-            sections.append(("管理", [("? 账户管理", "accounts")]))
+            sections.append(("管理", [("> 账户管理", "accounts")]))
 
         for section_label, items in sections:
             st.markdown(f'<div style="font-size:0.6rem;color:#484f58;text-transform:uppercase;letter-spacing:0.1em;padding:12px 8px 4px 8px;">{section_label}</div>', unsafe_allow_html=True)
