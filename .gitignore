@@ -1,0 +1,23 @@
+# 数据库文件（Streamlit Cloud 每次部署重新初始化）
+data/*.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 部署临时文件
+.deploy_pids
+.public_url
+deploy_online.sh
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
