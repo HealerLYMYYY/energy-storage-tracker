@@ -16,7 +16,6 @@ from pages.company import show_company
 from pages.compare import show_compare
 from pages.ranking import show_ranking
 from pages.industry import show_industry
-from pages.sentiment import show_sentiment
 from pages.data_entry import show_data_entry
 from pages.accounts import show_accounts
 
@@ -26,7 +25,6 @@ PAGE_FUNCTIONS = {
     "compare": show_compare,
     "ranking": show_ranking,
     "industry": show_industry,
-    "sentiment": show_sentiment,
     "data_entry": show_data_entry,
     "accounts": show_accounts,
 }
@@ -126,7 +124,6 @@ def render_sidebar():
             ("MARKET INTELLIGENCE", [
                 ("▸ Industry Rankings", "ranking"),
                 ("  Macro & Supply Chain", "industry"),
-                ("  Sentiment Monitor", "sentiment"),
             ]),
             ("DATA OPERATIONS", [
                 ("▸ Data Entry", "data_entry"),

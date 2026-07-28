@@ -59,7 +59,7 @@ def show_company():
 
     st.divider()
 
-    tab1, tab2, tab3 = st.tabs(["VOLUME · COST · PROFIT", "SENTIMENT", "DATA TABLES"])
+    tab1, tab2 = st.tabs(["VOLUME · COST · PROFIT", "DATA TABLES"])
 
     with tab1:
         col_a, col_b = st.columns(2)
@@ -90,14 +90,6 @@ def show_company():
             st.plotly_chart(fig4, use_container_width=True, config={'displayModeBar': False})
 
     with tab2:
-        st.markdown('<h3>Sentiment & News</h3>', unsafe_allow_html=True)
-        st.markdown(f"**Keywords**: {comp['keywords']}")
-        cl, cm, cr = st.columns(3)
-        with cl: st.link_button("Google News", f"https://news.google.com/search?q={comp['name']}+energy+storage&hl=en", use_container_width=True)
-        with cm: st.link_button("Baidu Search", f"https://www.baidu.com/s?wd={comp['name']}+储能", use_container_width=True)
-        with cr: st.link_button("Eastmoney", f"https://so.eastmoney.com/news/s?keyword={comp['name']}", use_container_width=True)
-
-    with tab3:
         st.markdown('<h3>Shipment Data (GWh)</h3>', unsafe_allow_html=True)
         ship_rows = [{"Year": y, "Total": ship_data.get(y, {}).get("total"), "Domestic": ship_data.get(y, {}).get("domestic"),
                       "Export": ship_data.get(y, {}).get("export"), "Residential": ship_data.get(y, {}).get("residential"),
