@@ -1,5 +1,4 @@
 [server]
-# Streamlit Cloud 部署配置
 headless = true
 port = 8501
 enableCORS = false
@@ -10,8 +9,9 @@ maxUploadSize = 50
 gatherUsageStats = false
 
 [theme]
-primaryColor = "#ff7b00"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#f8f9fa"
-textColor = "#212529"
+base = "dark"
+primaryColor = "#c9a96e"
+backgroundColor = "#0d1117"
+secondaryBackgroundColor = "#161b22"
+textColor = "#e6edf3"
 font = "sans serif"

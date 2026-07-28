@@ -1,13 +1,15 @@
-"""对比分析页"""
+"""Peer Comparison — Cross-sectional Analysis"""
+
 import streamlit as st
 import pandas as pd
+import plotly.graph_objects as go
 from utils.data_manager import get_competitors, get_shipment, get_cost, get_financial
 from utils.visualization import ship_trend_chart, fin_bar_chart, cost_margin_scatter, qtr_bar_chart
 
 
 def show_compare():
-    st.title("📈 竞对对比分析")
-    st.caption("多维度横向对比核心竞对")
+    st.markdown('<h1>Peer Comparison</h1>', unsafe_allow_html=True)
+    st.caption("Cross-sectional analysis of core peers across volume, cost, and profit dimensions")
 
     competitors = get_competitors()
     ids = ["catl", "byd", "hb", "hc", "tesla"]
@@ -22,24 +24,23 @@ def show_compare():
 
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader("📦 出货量对比")
+        st.markdown('<h3>Shipment Comparison</h3>', unsafe_allow_html=True)
         fig = ship_trend_chart(top5, ship_map, periods)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     with col2:
-        st.subheader("💰 营收对比 (2024 vs 2025)")
+        st.markdown('<h3>Revenue · 2024 vs 2025E</h3>', unsafe_allow_html=True)
         fig = fin_bar_chart(top5, fin_map, "revenue", "2024", "2025")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     col3, col4 = st.columns(2)
     with col3:
-        st.subheader("🎯 成本-毛利散点矩阵")
+        st.markdown('<h3>Cost-Margin Positioning</h3>', unsafe_allow_html=True)
         fig = cost_margin_scatter(top5, cost_map, fin_map)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     with col4:
-        st.subheader("📊 海外占比 vs 海外毛利")
-        import plotly.graph_objects as go
+        st.markdown('<h3>Export Ratio vs. Export Margin</h3>', unsafe_allow_html=True)
         xs, ys, names, colors = [], [], [], []
         for c in top5:
             s = ship_map[c["cid"]].get("2025", {})
@@ -53,29 +54,30 @@ def show_compare():
         fig_s = go.Figure()
         fig_s.add_trace(go.Scatter(x=xs, y=ys, mode="markers+text", text=names,
                                    textposition="top center", marker=dict(size=14, color=colors)))
-        fig_s.update_layout(xaxis_title="海外占比(%)", yaxis_title="海外毛利率(%)",
+        fig_s.update_layout(xaxis_title="Export Ratio (%)", yaxis_title="Export GM (%)",
                             margin=dict(l=20, r=20, t=10, b=20),
-                            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig_s, use_container_width=True)
+                            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                            font=dict(color="#8b949e"))
+        st.plotly_chart(fig_s, use_container_width=True, config={'displayModeBar': False})
 
-    st.subheader("📋 Q1-Q4 季度营收拆分 (2025)")
+    st.markdown('<h3>Quarterly Revenue Composition · 2025E</h3>', unsafe_allow_html=True)
     fig = qtr_bar_chart(top5, fin_map, "rv", "2025")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    # 竞争态势表
-    st.subheader("📊 竞争态势矩阵 (2025)")
+    st.markdown('<h3>Competitive Matrix · 2025E</h3>', unsafe_allow_html=True)
     matrix = []
     for c in top5:
         s = ship_map[c["cid"]].get("2025", {})
         co = cost_map[c["cid"]].get("2025", {})
         f = fin_map[c["cid"]].get("2025", {})
         matrix.append({
-            "公司": c["name"], "出货(GWh)": f'{s.get("total","-"):.1f}',
-            "成本(¥/Wh)": f'{co.get("system_cost","-"):.3f}' if co.get("system_cost") else "-",
-            "国内毛利": f'{co.get("domestic_margin","-"):.1f}%' if co.get("domestic_margin") else "-",
-            "海外毛利": f'{co.get("export_margin","-"):.1f}%' if co.get("export_margin") else "-",
-            "营收(亿)": f'{f.get("revenue","-"):.1f}' if f.get("revenue") else "-",
-            "净利(亿)": f'{f.get("net_profit","-"):.1f}' if f.get("net_profit") is not None else "-",
-            "净利率": f'{f.get("net_margin","-"):.1f}%' if f.get("net_margin") else "-",
+            "Company": c["name"],
+            "Shipment (GWh)": f'{s.get("total","—"):.1f}',
+            "Sys. Cost (RMB/Wh)": f'{co.get("system_cost","—"):.3f}' if co.get("system_cost") else "—",
+            "Domestic GM": f'{co.get("domestic_margin","—"):.1f}%' if co.get("domestic_margin") else "—",
+            "Export GM": f'{co.get("export_margin","—"):.1f}%' if co.get("export_margin") else "—",
+            "Revenue (bn)": f'{f.get("revenue","—"):.1f}' if f.get("revenue") else "—",
+            "Net Profit (bn)": f'{f.get("net_profit","—"):.1f}' if f.get("net_profit") is not None else "—",
+            "Net Margin": f'{f.get("net_margin","—"):.1f}%' if f.get("net_margin") else "—",
         })
     st.dataframe(pd.DataFrame(matrix), use_container_width=True, hide_index=True)
