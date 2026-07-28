@@ -1,12 +1,11 @@
 """
 光储竞对分析系统 - 数据库模块 (双模式: SQLite开发 / PostgreSQL生产)
-环境变量 DATABASE_URL 为空时使用本地 SQLite，否则使用 PostgreSQL
+环境变量 DATABASE_URL 为空时使用本地 SQLite，否则尝试 PostgreSQL
+PostgreSQL 连接失败时自动降级到 SQLite，保证页面不崩溃
 """
 
 import os
 import bcrypt
-import psycopg2
-import psycopg2.extras
 import sqlite3
 from contextlib import contextmanager
 
@@ -14,8 +13,26 @@ DB_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 DB_PATH = os.path.join(DB_DIR, "energy_storage.db")
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
-# 当前模式
-USE_PG = bool(DATABASE_URL)
+# ——— 智能检测：先尝试连接 PostgreSQL，失败则降级 ———
+USE_PG = False
+PG_AVAILABLE = False
+PG_ERROR_MSG = None
+
+if DATABASE_URL:
+    try:
+        import psycopg2
+        import psycopg2.extras
+        # 快速连接测试（3秒超时）
+        test_conn = psycopg2.connect(DATABASE_URL, connect_timeout=3)
+        test_conn.close()
+        USE_PG = True
+        PG_AVAILABLE = True
+        print(f"[DB] PostgreSQL 连接成功 ✓")
+    except Exception as e:
+        USE_PG = False
+        PG_AVAILABLE = False
+        PG_ERROR_MSG = str(e)
+        print(f"[DB] PostgreSQL 连接失败，降级到 SQLite: {PG_ERROR_MSG}")
 
 
 def init_db():
@@ -193,15 +210,28 @@ def _create_tables_pg(conn):
 
 @contextmanager
 def get_connection():
-    """统一数据库连接 - 自动选择 SQLite 或 PostgreSQL"""
+    """统一数据库连接 - 自动选择 SQLite 或 PostgreSQL
+    PostgreSQL 连接失败时自动降级到 SQLite"""
     if USE_PG:
-        conn = psycopg2.connect(DATABASE_URL)
-        conn.autocommit = False
-        conn.cursor_factory = psycopg2.extras.RealDictCursor
         try:
-            yield conn
-        finally:
-            conn.close()
+            conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
+            conn.autocommit = False
+            conn.cursor_factory = psycopg2.extras.RealDictCursor
+            try:
+                yield conn
+            finally:
+                conn.close()
+        except Exception as e:
+            # PG 连接失败 → 降级到 SQLite
+            print(f"[DB] 运行时 PG 连接失败，降级 SQLite: {e}")
+            conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA foreign_keys=ON")
+            try:
+                yield conn
+            finally:
+                conn.close()
     else:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
