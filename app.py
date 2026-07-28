@@ -10,13 +10,35 @@ st.set_page_config(page_title="光储竞对追踪", page_icon="🔋", layout="wi
 from utils.database import init_db
 from utils.auth import init_auth, logout
 
+# 顶部导入所有页面函数（避免动态导入在云端失败）
+from pages.login import show_login
+from pages.dashboard import show_dashboard
+from pages.company import show_company
+from pages.compare import show_compare
+from pages.ranking import show_ranking
+from pages.industry import show_industry
+from pages.sentiment import show_sentiment
+from pages.data_entry import show_data_entry
+from pages.accounts import show_accounts
+
+
+PAGE_FUNCTIONS = {
+    "dashboard": show_dashboard,
+    "company": show_company,
+    "compare": show_compare,
+    "ranking": show_ranking,
+    "industry": show_industry,
+    "sentiment": show_sentiment,
+    "data_entry": show_data_entry,
+    "accounts": show_accounts,
+}
+
 
 def main():
     init_db()
     init_auth()
 
     if not st.session_state.authenticated:
-        from pages.login import show_login
         show_login()
         return
 
@@ -60,13 +82,14 @@ def render_sidebar():
                          key=f"nav_{page}",
                          help=f"切换到{label}"):
                 st.session_state.page = page
+                st.rerun()
 
         st.divider()
         if st.button("🚪 退出登录", use_container_width=True):
             logout()
             st.rerun()
 
-        st.markdown("""<div style="font-size:0.65rem;color:#9ca3af;margin-top:1rem">v2.0 · 光储行业专用</div>""",
+        st.markdown("""<div style="font-size:0.65rem;color:#9ca3af;margin-top:1rem">v2.1 · 光储行业专用</div>""",
                     unsafe_allow_html=True)
 
 
@@ -74,23 +97,8 @@ def render_content():
     if "page" not in st.session_state:
         st.session_state.page = "dashboard"
     page = st.session_state.page
-    page_map = {
-        "dashboard": ("pages.dashboard", "show_dashboard"),
-        "company": ("pages.company", "show_company"),
-        "compare": ("pages.compare", "show_compare"),
-        "ranking": ("pages.ranking", "show_ranking"),
-        "industry": ("pages.industry", "show_industry"),
-        "sentiment": ("pages.sentiment", "show_sentiment"),
-        "data_entry": ("pages.data_entry", "show_data_entry"),
-        "accounts": ("pages.accounts", "show_accounts"),
-    }
-    if page in page_map:
-        mod, func = page_map[page]
-        exec(f"from {mod} import {func}")
-        eval(f"{func}()")
-    else:
-        from pages.dashboard import show_dashboard
-        show_dashboard()
+    show_func = PAGE_FUNCTIONS.get(page, show_dashboard)
+    show_func()
 
 
 if __name__ == "__main__":
