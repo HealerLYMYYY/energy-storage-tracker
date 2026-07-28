@@ -144,7 +144,7 @@ def render_sidebar():
         # Footer
         st.markdown(f"""
         <div style="position:fixed;bottom:16px;left:16px;font-size:0.58rem;color:#30363d;text-transform:uppercase;letter-spacing:0.08em;">
-            v2.2 · CONFIDENTIAL
+            v3.0 · 2026E · CONFIDENTIAL
         </div>""", unsafe_allow_html=True)
 
         st.divider()

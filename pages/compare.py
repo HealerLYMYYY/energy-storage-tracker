@@ -1,4 +1,4 @@
-"""Peer Comparison — Cross-sectional Analysis"""
+"""Peer Comparison — Cross-sectional Analysis · 2026E Edition"""
 
 import streamlit as st
 import pandas as pd
@@ -14,7 +14,7 @@ def show_compare():
     competitors = get_competitors()
     ids = ["catl", "byd", "hb", "hc", "tesla"]
     top5 = [c for c in competitors if c["cid"] in ids]
-    periods = ["2022", "2023", "2024", "2025"]
+    periods = ["2022", "2023", "2024", "2025", "2026E"]
 
     ship_map, cost_map, fin_map = {}, {}, {}
     for c in top5:
@@ -29,22 +29,22 @@ def show_compare():
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     with col2:
-        st.markdown('<h3>Revenue · 2024 vs 2025E</h3>', unsafe_allow_html=True)
-        fig = fin_bar_chart(top5, fin_map, "revenue", "2024", "2025")
+        st.markdown('<h3>Revenue · 2025 vs 2026E</h3>', unsafe_allow_html=True)
+        fig = fin_bar_chart(top5, fin_map, "revenue", "2025", "2026E")
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     col3, col4 = st.columns(2)
     with col3:
-        st.markdown('<h3>Cost-Margin Positioning</h3>', unsafe_allow_html=True)
-        fig = cost_margin_scatter(top5, cost_map, fin_map)
+        st.markdown('<h3>Cost-Margin Positioning · 2026E</h3>', unsafe_allow_html=True)
+        fig = cost_margin_scatter(top5, cost_map, fin_map, "2026E")
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     with col4:
-        st.markdown('<h3>Export Ratio vs. Export Margin</h3>', unsafe_allow_html=True)
+        st.markdown('<h3>Export Ratio vs. Export Margin · 2026E</h3>', unsafe_allow_html=True)
         xs, ys, names, colors = [], [], [], []
         for c in top5:
-            s = ship_map[c["cid"]].get("2025", {})
-            co = cost_map[c["cid"]].get("2025", {})
+            s = ship_map[c["cid"]].get("2026E", {})
+            co = cost_map[c["cid"]].get("2026E", {})
             t = s.get("total", 0) or 1
             ex_ratio = (s.get("export", 0) or 0) / t * 100
             em = co.get("export_margin") or 0
@@ -60,19 +60,19 @@ def show_compare():
                             font=dict(color="#8b949e"))
         st.plotly_chart(fig_s, use_container_width=True, config={'displayModeBar': False})
 
-    st.markdown('<h3>Quarterly Revenue Composition · 2025E</h3>', unsafe_allow_html=True)
-    fig = qtr_bar_chart(top5, fin_map, "rv", "2025")
+    st.markdown('<h3>Quarterly Revenue Composition · 2026E</h3>', unsafe_allow_html=True)
+    fig = qtr_bar_chart(top5, fin_map, "rv", "2026E")
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    st.markdown('<h3>Competitive Matrix · 2025E</h3>', unsafe_allow_html=True)
+    st.markdown('<h3>Competitive Matrix · 2026E</h3>', unsafe_allow_html=True)
     matrix = []
     for c in top5:
-        s = ship_map[c["cid"]].get("2025", {})
-        co = cost_map[c["cid"]].get("2025", {})
-        f = fin_map[c["cid"]].get("2025", {})
+        s = ship_map[c["cid"]].get("2026E", {})
+        co = cost_map[c["cid"]].get("2026E", {})
+        f = fin_map[c["cid"]].get("2026E", {})
         matrix.append({
             "Company": c["name"],
-            "Shipment (GWh)": f'{s.get("total","—"):.1f}',
+            "Shipment (GWh)": f'{s.get("total","—"):.1f}' if s.get("total") else "—",
             "Sys. Cost (RMB/Wh)": f'{co.get("system_cost","—"):.3f}' if co.get("system_cost") else "—",
             "Domestic GM": f'{co.get("domestic_margin","—"):.1f}%' if co.get("domestic_margin") else "—",
             "Export GM": f'{co.get("export_margin","—"):.1f}%' if co.get("export_margin") else "—",

@@ -1,10 +1,10 @@
-"""Company Deep Dive — Volume / Cost / Profit"""
+"""Company Deep Dive — Volume / Cost / Profit · 2026E Edition"""
 
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from utils.data_manager import get_competitors, get_shipment, get_cost, get_financial
-from utils.visualization import company_trend_chart, cost_price_chart, qtr_bar_chart
+from utils.visualization import company_trend_chart, cost_price_chart, qtr_bar_chart, hex_to_rgba, FORECAST_PERIOD
 
 
 def show_company():
@@ -32,11 +32,16 @@ def show_company():
     ship_data = get_shipment(cid)
     cost_data = get_cost(cid)
     fin_data = get_financial(cid)
-    periods = ["2022", "2023", "2024", "2025"]
+    periods = ["2022", "2023", "2024", "2025", "2026E"]
+    hist_periods = ["2022", "2023", "2024", "2025"]
 
+    # 2026E data
+    s26 = ship_data.get("2026E", {})
+    co26 = cost_data.get("2026E", {})
+    f26 = fin_data.get("2026E", {})
+
+    # 2025 data for reference
     s25 = ship_data.get("2025", {})
-    co25 = cost_data.get("2025", {})
-    f25 = fin_data.get("2025", {})
 
     st.divider()
 
@@ -51,11 +56,18 @@ def show_company():
         </div>
     </div>""", unsafe_allow_html=True)
 
+    # ——— KPI Row (2026E) ———
     k1, k2, k3, k4 = st.columns(4)
-    with k1: st.metric("Shipment 2025E", f"{s25.get('total','—'):.1f} GWh")
-    with k2: st.metric("Domestic GM", f"{co25.get('domestic_margin','—'):.1f}%" if co25.get("domestic_margin") else "N/A")
-    with k3: st.metric("Export GM", f"{co25.get('export_margin','—'):.1f}%" if co25.get("export_margin") else "N/A")
-    with k4: st.metric("Net Profit", f"{f25.get('net_profit','—'):.1f} bn" if f25.get("net_profit") is not None else "N/A")
+    with k1:
+        delta_ship = s26.get("total", 0) - s25.get("total", 0) if s26.get("total") and s25.get("total") else None
+        st.metric("Shipment 2026E", f"{s26.get('total','—'):.1f} GWh" if s26.get("total") else "N/A",
+                  f"{delta_ship:+.1f} GWh" if delta_ship else None)
+    with k2:
+        st.metric("Domestic GM", f"{co26.get('domestic_margin','—'):.1f}%" if co26.get("domestic_margin") else "N/A")
+    with k3:
+        st.metric("Export GM", f"{co26.get('export_margin','—'):.1f}%" if co26.get("export_margin") else "N/A")
+    with k4:
+        st.metric("Net Profit", f"{f26.get('net_profit','—'):.1f} bn" if f26.get("net_profit") is not None else "N/A")
 
     st.divider()
 
@@ -85,26 +97,63 @@ def show_company():
             fig3 = cost_price_chart(cost_data, periods, comp["color"])
             st.plotly_chart(fig3, use_container_width=True, config={'displayModeBar': False})
 
-            st.markdown('<h3>Quarterly Revenue · 2025E</h3>', unsafe_allow_html=True)
-            fig4 = qtr_bar_chart([comp], {cid: fin_data}, "rv", "2025")
+            st.markdown('<h3>Quarterly Revenue · 2026E</h3>', unsafe_allow_html=True)
+            fig4 = qtr_bar_chart([comp], {cid: fin_data}, "rv", "2026E")
             st.plotly_chart(fig4, use_container_width=True, config={'displayModeBar': False})
 
     with tab2:
+        # ——— Shipment Data Table ———
         st.markdown('<h3>Shipment Data (GWh)</h3>', unsafe_allow_html=True)
-        ship_rows = [{"Year": y, "Total": ship_data.get(y, {}).get("total"), "Domestic": ship_data.get(y, {}).get("domestic"),
-                      "Export": ship_data.get(y, {}).get("export"), "Residential": ship_data.get(y, {}).get("residential"),
-                      "Utility-scale": ship_data.get(y, {}).get("utility"), "C&I": ship_data.get(y, {}).get("commercial")} for y in periods]
+        ship_rows = []
+        for y in periods:
+            row = {"Year": y, "Total": ship_data.get(y, {}).get("total"),
+                   "Domestic": ship_data.get(y, {}).get("domestic"),
+                   "Export": ship_data.get(y, {}).get("export"),
+                   "Residential": ship_data.get(y, {}).get("residential"),
+                   "Utility-scale": ship_data.get(y, {}).get("utility"),
+                   "C&I": ship_data.get(y, {}).get("commercial")}
+            ship_rows.append(row)
         st.dataframe(pd.DataFrame(ship_rows), use_container_width=True, hide_index=True)
 
+        # ——— Cost & Pricing Table ———
         st.markdown('<h3>Cost & Pricing (RMB/Wh)</h3>', unsafe_allow_html=True)
-        cost_rows = [{"Year": y, "System Cost": cost_data.get(y, {}).get("system_cost"), "Domestic ASP": cost_data.get(y, {}).get("domestic_price"),
-                      "Domestic GM%": cost_data.get(y, {}).get("domestic_margin"), "Export ASP": cost_data.get(y, {}).get("export_price"),
-                      "Export GM%": cost_data.get(y, {}).get("export_margin")} for y in periods]
+        cost_rows = []
+        for y in periods:
+            row = {"Year": y, "System Cost": cost_data.get(y, {}).get("system_cost"),
+                   "Domestic ASP": cost_data.get(y, {}).get("domestic_price"),
+                   "Domestic GM%": cost_data.get(y, {}).get("domestic_margin"),
+                   "Export ASP": cost_data.get(y, {}).get("export_price"),
+                   "Export GM%": cost_data.get(y, {}).get("export_margin")}
+            cost_rows.append(row)
         st.dataframe(pd.DataFrame(cost_rows), use_container_width=True, hide_index=True)
 
+        # ——— Financials Table ———
+        # 2025: annual summary only (no quarterly columns)
+        # 2026E: shows Q1-Q4 quarterly breakdown
         st.markdown('<h3>Financials (RMB bn)</h3>', unsafe_allow_html=True)
-        fin_rows = [{"Year": y, "Revenue": fin_data.get(y, {}).get("revenue"), "Gross Margin%": fin_data.get(y, {}).get("gross_margin"),
-                     "Net Profit": fin_data.get(y, {}).get("net_profit"), "Net Margin%": fin_data.get(y, {}).get("net_margin"),
-                     "Q1 Rev": fin_data.get(y, {}).get("rv_q1"), "Q2 Rev": fin_data.get(y, {}).get("rv_q2"),
-                     "Q3 Rev": fin_data.get(y, {}).get("rv_q3"), "Q4 Rev": fin_data.get(y, {}).get("rv_q4")} for y in periods]
+        fin_rows = []
+        for y in periods:
+            fd = fin_data.get(y, {})
+            if y == "2026E":
+                # Forecast: show quarterly breakdown
+                fin_rows.append({
+                    "Year": y,
+                    "Revenue": fd.get("revenue"),
+                    "Gross Margin%": fd.get("gross_margin"),
+                    "Net Profit": fd.get("net_profit"),
+                    "Net Margin%": fd.get("net_margin"),
+                    "Q1 Rev": fd.get("rv_q1"),
+                    "Q2 Rev": fd.get("rv_q2"),
+                    "Q3 Rev": fd.get("rv_q3"),
+                    "Q4 Rev": fd.get("rv_q4"),
+                })
+            else:
+                # Historical: annual only
+                fin_rows.append({
+                    "Year": y,
+                    "Revenue": fd.get("revenue"),
+                    "Gross Margin%": fd.get("gross_margin"),
+                    "Net Profit": fd.get("net_profit"),
+                    "Net Margin%": fd.get("net_margin"),
+                })
         st.dataframe(pd.DataFrame(fin_rows), use_container_width=True, hide_index=True)
