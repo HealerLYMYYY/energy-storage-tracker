@@ -18,6 +18,7 @@ from pages.ranking import show_ranking
 from pages.industry import show_industry
 from pages.data_entry import show_data_entry
 from pages.accounts import show_accounts
+from pages.db_config import show_db_config
 
 PAGE_FUNCTIONS = {
     "dashboard": show_dashboard,
@@ -27,6 +28,7 @@ PAGE_FUNCTIONS = {
     "industry": show_industry,
     "data_entry": show_data_entry,
     "accounts": show_accounts,
+    "db_config": show_db_config,
 }
 
 GLOBAL_CSS = """
@@ -142,7 +144,7 @@ def render_sidebar():
             ]),
         ]
         if user["role"] == "admin":
-            sections.append(("管理", [("> 账户管理", "accounts")]))
+            sections.append(("管理", [("> 账户管理", "accounts"), ("> 数据库配置", "db_config")]))
 
         for section_label, items in sections:
             st.markdown(f'<div style="font-size:0.6rem;color:#484f58;text-transform:uppercase;letter-spacing:0.1em;padding:12px 8px 4px 8px;">{section_label}</div>', unsafe_allow_html=True)
