@@ -245,12 +245,6 @@ def quarterly_stack_chart(competitors, qdata_map, metric_label="GWh"):
         ))
 
     fig.update_layout(barmode="stack")
-    fig.add_annotation(
-        text="▨ 浅色 = 未来季度预测", xref="paper", yref="paper",
-        x=0.99, y=0.02, showarrow=False, xanchor="right", yanchor="bottom",
-        font=dict(size=9, color=FONT_COLOR),
-        bgcolor="rgba(255,255,255,0.8)", borderpad=3
-    )
     return _base_layout(fig, height=420, y_title=metric_label)
 
 
@@ -290,11 +284,6 @@ def combo_annual_quarterly(annual_data, quarters_data, color, label="GWh", unit=
     fig.update_layout(
         barmode="stack",
         xaxis=dict(type="category", categoryorder="array", categoryarray=categories),
-    )
-    fig.add_annotation(
-        text="2026E = Q1+Q2+Q3+Q4", xref="paper", yref="paper",
-        x=0.99, y=1.02, showarrow=False, xanchor="right", yanchor="bottom",
-        font=dict(size=9, color=FONT_COLOR)
     )
     return _base_layout(fig, height=420, y_title=unit or label)
 
