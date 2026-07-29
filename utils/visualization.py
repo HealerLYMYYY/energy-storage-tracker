@@ -259,32 +259,38 @@ def quarterly_stack_chart(competitors, qdata_map, metric_label="GWh"):
 # ================================================================
 
 def combo_annual_quarterly(annual_data, quarters_data, color, label="GWh", unit=""):
-    """单公司：2022-2025 年度柱 + 2026E 一根堆积柱（Q1-Q4 分段）。"""
+    """单公司：2022-2025 各一根年度柱 + 2026E 一根堆积柱（Q1-Q4 分段）。
+    X 轴为离散分类，避免年份被当作连续数值。"""
     years = ["2022", "2023", "2024", "2025"]
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     completed = current_completed_quarters()
+    categories = years + ["2026E"]
 
     fig = go.Figure()
 
-    # 历史年度柱（实色）
-    annual_vals = [annual_data.get(y) for y in years]
+    # 历史年度柱（只在对应年份有值，2026E 位置为 0）
+    annual_vals = [annual_data.get(y) for y in years] + [0]
     fig.add_trace(go.Bar(
-        x=years, y=annual_vals, name=label,
+        x=categories, y=annual_vals, name=label,
         marker_color=color,
         width=0.55,
     ))
 
-    # 2026E 季度堆积
+    # 2026E 季度堆积（历史年份为 0，2026E 位置堆积）
     for q in quarters:
         v = quarters_data.get(q)
         q_color = Q_COLORS[q] if q in completed else Q_COLORS_FUTURE[q]
+        vals = [0] * len(years) + [v or 0]
         fig.add_trace(go.Bar(
-            x=["2026E"], y=[v or 0], name=q,
+            x=categories, y=vals, name=q,
             marker_color=q_color,
             width=0.55,
         ))
 
-    fig.update_layout(barmode="relative")
+    fig.update_layout(
+        barmode="stack",
+        xaxis=dict(type="category", categoryorder="array", categoryarray=categories),
+    )
     fig.add_annotation(
         text="2026E = Q1+Q2+Q3+Q4", xref="paper", yref="paper",
         x=0.99, y=1.02, showarrow=False, xanchor="right", yanchor="bottom",
