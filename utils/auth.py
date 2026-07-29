@@ -1,11 +1,19 @@
 """
 光储竞对分析系统 - 认证模块
+自动适配 SQLite(?) 和 PostgreSQL(%s) 占位符
 """
 
 import bcrypt
 import streamlit as st
 from datetime import datetime
-from utils.database import get_connection
+from utils.database import get_connection, USE_PG
+
+
+def _q(sql):
+    """替换占位符"""
+    if USE_PG:
+        return sql.replace("?", "%s")
+    return sql
 
 
 def init_auth():
@@ -29,11 +37,11 @@ def hash_password(plain):
 def authenticate(username, password):
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT id,username,password_hash,display_name,role,is_active FROM users WHERE username=?", (username,))
+        c.execute(_q("SELECT id,username,password_hash,display_name,role,is_active FROM users WHERE username=?"), (username,))
         u = c.fetchone()
         if not u or not u["is_active"] or not verify_password(password, u["password_hash"]):
             return None
-        c.execute("UPDATE users SET last_login=? WHERE id=?", (datetime.now(), u["id"]))
+        c.execute(_q("UPDATE users SET last_login=? WHERE id=?"), (datetime.now(), u["id"]))
         conn.commit()
         log_activity(u["id"], "login", f"用户 {username} 登录")
         return {"id": u["id"], "username": u["username"], "display_name": u["display_name"], "role": u["role"]}
@@ -49,7 +57,7 @@ def logout():
 def log_activity(user_id, action, details=""):
     try:
         with get_connection() as conn:
-            conn.execute("INSERT INTO activity_logs (user_id,action,details) VALUES (?,?,?)",
+            conn.execute(_q("INSERT INTO activity_logs (user_id,action,details) VALUES (?,?,?)"),
                          (user_id, action, details))
             conn.commit()
     except Exception:
@@ -75,9 +83,9 @@ def create_user(username, password, display_name, role="viewer"):
         return False, "密码至少6位"
     try:
         with get_connection() as conn:
-            if conn.execute("SELECT id FROM users WHERE username=?", (username,)).fetchone():
+            if conn.execute(_q("SELECT id FROM users WHERE username=?"), (username,)).fetchone():
                 return False, f"用户名 '{username}' 已存在"
-            conn.execute("INSERT INTO users (username,password_hash,display_name,role) VALUES (?,?,?,?)",
+            conn.execute(_q("INSERT INTO users (username,password_hash,display_name,role) VALUES (?,?,?,?)"),
                          (username, hash_password(password), display_name, role))
             conn.commit()
             if st.session_state.user:
@@ -95,6 +103,8 @@ def update_user(user_id, **kw):
     try:
         with get_connection() as conn:
             set_clause = ", ".join(f"{k}=?" for k in updates)
+            if USE_PG:
+                set_clause = set_clause.replace("?", "%s")
             conn.execute(f"UPDATE users SET {set_clause} WHERE id=?", (*updates.values(), user_id))
             conn.commit()
             return True, "更新成功"

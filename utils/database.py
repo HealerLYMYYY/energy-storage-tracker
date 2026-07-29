@@ -8,6 +8,15 @@ import bcrypt
 import sqlite3
 from contextlib import contextmanager
 
+# 安全导入 psycopg2（如果不可用则标记）
+try:
+    import psycopg2
+    import psycopg2.extras
+    PSYCOPG2_AVAILABLE = True
+except ImportError:
+    PSYCOPG2_AVAILABLE = False
+    psycopg2 = None
+
 DB_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 DB_PATH = os.path.join(DB_DIR, "energy_storage.db")
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
@@ -33,9 +42,9 @@ def _fix_pg_url(url):
 
 def _test_pg_connection(url, timeout=8):
     """尝试连接 PostgreSQL，成功返回 True，失败返回错误信息"""
+    if not PSYCOPG2_AVAILABLE:
+        return False, "psycopg2 未安装"
     try:
-        import psycopg2
-        import psycopg2.extras
         conn = psycopg2.connect(url, connect_timeout=timeout)
         conn.close()
         return True, None
@@ -248,6 +257,7 @@ def _create_tables_pg(conn):
 def get_connection():
     """统一数据库连接 - 自动选择 SQLite 或 PostgreSQL
     PostgreSQL 连接失败时自动降级到 SQLite"""
+    global USE_PG
     if USE_PG:
         try:
             url = _fix_pg_url(DATABASE_URL)
@@ -259,8 +269,9 @@ def get_connection():
             finally:
                 conn.close()
         except Exception as e:
-            # PG 连接失败 → 降级到 SQLite
+            # PG 连接失败 → 降级到 SQLite，并更新全局状态
             print(f"[DB] 运行时 PG 连接失败，降级 SQLite: {e}")
+            USE_PG = False
             conn = sqlite3.connect(DB_PATH)
             conn.row_factory = sqlite3.Row
             conn.execute("PRAGMA journal_mode=WAL")
