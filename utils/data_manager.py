@@ -113,6 +113,37 @@ def get_rankings():
 
 # ========== 数据更新 ==========
 
+def get_shipment_quarters(cid, year="2026"):
+    """获取季度出货量: {"Q1": v, "Q2": v, "Q3": v, "Q4": v}"""
+    data = get_shipment(cid)
+    return {
+        "Q1": data.get(f"{year}Q1", {}).get("total"),
+        "Q2": data.get(f"{year}Q2", {}).get("total"),
+        "Q3": data.get(f"{year}Q3", {}).get("total"),
+        "Q4": data.get(f"{year}Q4", {}).get("total"),
+    }
+
+
+def get_financial_quarters(fin_2026):
+    """从 2026E 财务记录提取季度营收/净利润"""
+    return {
+        "rv": {f"Q{i}": fin_2026.get(f"rv_q{i}") for i in range(1, 5)},
+        "np": {f"Q{i}": fin_2026.get(f"np_q{i}") for i in range(1, 5)},
+    }
+
+
+def save_shipment_quarters(cid, year, quarters):
+    """保存季度出货量，同时更新年度 2026E 总量"""
+    total = sum(v or 0 for v in quarters.values())
+    ok_all = True
+    msgs = []
+    for q, v in quarters.items():
+        ok, msg = save_shipment(cid, f"{year}{q}", {"total": v})
+        ok_all = ok_all and ok
+        msgs.append(msg)
+    return ok_all, f"季度数据已保存 (合计 {total:.1f} GWh)"
+
+
 def save_shipment(cid, period, data):
     with get_connection() as conn:
         comp = conn.execute(_q("SELECT id FROM competitors WHERE cid=?"), (cid,)).fetchone()

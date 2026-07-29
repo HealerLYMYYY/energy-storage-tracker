@@ -1,9 +1,11 @@
-"""仪表盘 — 机构级总览 · 2026E 预测版"""
+"""仪表盘 — 机构级总览 · 2026E 季度化"""
 
 import streamlit as st
 import pandas as pd
-from utils.data_manager import get_competitors, get_all_shipments, get_financial, get_cost
-from utils.visualization import ship_trend_chart, ship_stack_chart, fin_bar_chart, qtr_bar_chart, FORECAST_PERIOD
+from utils.data_manager import (get_competitors, get_all_shipments, get_financial, get_cost,
+                                get_shipment_quarters)
+from utils.visualization import (ship_trend_chart, ship_stack_chart, quarterly_stack_chart,
+                                 FORECAST_PERIOD)
 
 
 def show_dashboard():
@@ -28,6 +30,14 @@ def show_dashboard():
         fin_map[c["cid"]] = get_financial(c["cid"])
         cost_map[c["cid"]] = get_cost(c["cid"])
 
+    # 季度数据（2026）
+    ship_q_map = {c["cid"]: get_shipment_quarters(c["cid"], "2026") for c in competitors}
+    rv_q_map, np_q_map = {}, {}
+    for c in competitors:
+        f26 = fin_map[c["cid"]].get("2026E", {})
+        rv_q_map[c["cid"]] = {f"Q{i}": f26.get(f"rv_q{i}") for i in range(1, 5)}
+        np_q_map[c["cid"]] = {f"Q{i}": f26.get(f"np_q{i}") for i in range(1, 5)}
+
     # ——— KPI 行 ———
     total_2026 = sum(ship_map.get(c["cid"], {}).get("2026E", {}).get("total", 0) or 0 for c in competitors)
     total_2025 = sum(ship_map.get(c["cid"], {}).get("2025", {}).get("total", 0) or 0 for c in competitors)
@@ -39,7 +49,7 @@ def show_dashboard():
     with k2:
         st.metric("覆盖公司", "9 家", "6 大市场")
     with k3:
-        st.metric("数据区间", "2022–2026E", "年度 + 季度")
+        st.metric("数据区间", "2022–2026E", "2026 按季度追踪")
     with k4:
         st.metric("数据来源", "年报", "行业数据")
 
@@ -58,21 +68,21 @@ def show_dashboard():
             delta_str = f"{delta:+.1f}%" if delta else "—"
             v26_str = f"{v26:.1f}" if v26 else "—"
             st.markdown(f"""
-            <div style="background:#161b22;border:1px solid #21262d;border-radius:4px;padding:10px 8px;text-align:center;
+            <div style="background:#1a1e23;border:1px solid #2a2f36;border-radius:4px;padding:10px 8px;text-align:center;
                         border-top:2px solid {c['color']};">
-                <div style="font-size:0.75rem;font-weight:600;color:#e6edf3;">{c['name']}</div>
-                <div style="font-size:0.6rem;color:#8b949e;">{c['ticker']}</div>
-                <div style="font-size:0.85rem;font-weight:600;color:#c9a96e;margin-top:6px;font-family:'JetBrains Mono',monospace;">
+                <div style="font-size:0.75rem;font-weight:600;color:#ECECEC;">{c['name']}</div>
+                <div style="font-size:0.6rem;color:#9a9a9a;">{c['ticker']}</div>
+                <div style="font-size:0.85rem;font-weight:600;color:#FF7900;margin-top:6px;font-family:'JetBrains Mono',monospace;">
                     {v26_str}</div>
-                <div style="font-size:0.55rem;color:#8b949e;">GWh (2026E) <span style="color:#c9a96e;">{delta_str}</span></div>
+                <div style="font-size:0.55rem;color:#9a9a9a;">GWh (2026E) <span style="color:#FF7900;">{delta_str}</span></div>
             </div>""", unsafe_allow_html=True)
 
     st.divider()
 
-    # ——— 图表行 1 ———
+    # ——— 图表行 1：年度趋势 + 结构 ———
     col_a, col_b = st.columns(2)
     with col_a:
-        st.markdown('<h3>出货量趋势</h3>', unsafe_allow_html=True)
+        st.markdown('<h3>出货量趋势（2026E 为季度加总）</h3>', unsafe_allow_html=True)
         top5 = [c for c in competitors if c["cid"] in ["catl", "byd", "hb", "hc", "tesla"]]
         fig = ship_trend_chart(top5, ship_map, periods)
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
@@ -82,24 +92,30 @@ def show_dashboard():
         fig = ship_stack_chart(competitors, ship_map, "2026E", "region")
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    # ——— 图表行 2 ———
+    # ——— 图表行 2：2026E 季度堆积（核心） ———
+    st.markdown('<h3>2026E 季度出货量 · 堆积图（Q1+Q2+Q3+Q4 = 全年）</h3>', unsafe_allow_html=True)
+    top5_cids = {"catl", "byd", "hb", "hc", "tesla"}
+    top5 = [c for c in competitors if c["cid"] in top5_cids]
+    fig_q = quarterly_stack_chart(top5, ship_q_map, "GWh")
+    st.plotly_chart(fig_q, use_container_width=True, config={'displayModeBar': False})
+
     col_c, col_d = st.columns(2)
     with col_c:
-        st.markdown('<h3>应用场景结构 · 2026E</h3>', unsafe_allow_html=True)
-        fig = ship_stack_chart(competitors, ship_map, "2026E", "app")
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('<h3>2026E 季度营收（亿元）</h3>', unsafe_allow_html=True)
+        fig_rv = quarterly_stack_chart(top5, rv_q_map, "亿元")
+        st.plotly_chart(fig_rv, use_container_width=True, config={'displayModeBar': False})
 
     with col_d:
-        st.markdown('<h3>季度收入拆解 · 2026E</h3>', unsafe_allow_html=True)
-        fig = qtr_bar_chart(competitors, fin_map, "rv", "2026E")
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('<h3>2026E 季度净利润（亿元）</h3>', unsafe_allow_html=True)
+        fig_np = quarterly_stack_chart(top5, np_q_map, "亿元")
+        st.plotly_chart(fig_np, use_container_width=True, config={'displayModeBar': False})
 
     # ——— 竞争矩阵 ———
     st.markdown('<h3>竞争定位矩阵 · 2026E</h3>', unsafe_allow_html=True)
     matrix_data = []
     for c in competitors:
         s = ship_map.get(c["cid"], {}).get("2026E", {})
-        co = get_financial(c["cid"]).get("2026E", {})
+        co = fin_map.get(c["cid"], {}).get("2026E", {})
         matrix_data.append({
             "公司": c["name"],
             "出货量 (GWh)": f'{s.get("total","—"):.1f}' if s.get("total") else "—",

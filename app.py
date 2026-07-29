@@ -35,51 +35,56 @@ GLOBAL_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* 根样式覆盖 */
-* { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+/* ===== 品牌色系: 主橙 #FF7900 | 辅助 黄#EEB83F 绿#54B244 青#55BABE 蓝#6E92FF 深青#2B686F ===== */
+
+/* 根样式 */
+* { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
 h1, h2, h3 { font-weight: 600; letter-spacing: -0.01em; }
-h1 { font-size: 1.5rem !important; margin-bottom: 0.2rem !important; }
+h1 { font-size: 1.5rem !important; margin-bottom: 0.2rem !important; color: #ECECEC !important; }
 h2 { font-size: 1.15rem !important; }
-h3 { font-size: 0.95rem !important; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e !important; }
+h3 { font-size: 0.95rem !important; text-transform: uppercase; letter-spacing: 0.05em; color: #9a9a9a !important; }
 
 /* 指标卡 */
-[data-testid="stMetric"] { background: #161b22; border: 1px solid #21262d; border-radius: 6px; padding: 14px 18px; }
-[data-testid="stMetric"] label { font-size: 0.7rem !important; text-transform: uppercase; letter-spacing: 0.06em; color: #8b949e !important; }
-[data-testid="stMetric"] [data-testid="stMetricValue"] { font-size: 1.6rem !important; font-weight: 600; color: #e6edf3; font-family: 'JetBrains Mono', monospace; }
+[data-testid="stMetric"] { background: #1a1e23; border: 1px solid #2a2f36; border-radius: 6px; padding: 14px 18px; }
+[data-testid="stMetric"] label { font-size: 0.7rem !important; text-transform: uppercase; letter-spacing: 0.06em; color: #9a9a9a !important; }
+[data-testid="stMetric"] [data-testid="stMetricValue"] { font-size: 1.6rem !important; font-weight: 600; color: #ECECEC; font-family: 'JetBrains Mono', monospace; }
 
 /* 侧边栏 */
-[data-testid="stSidebar"] { background: #0d1117; border-right: 1px solid #21262d; }
+[data-testid="stSidebar"] { background: #111417; border-right: 1px solid #2a2f36; }
 [data-testid="stSidebar"] .stButton > button {
     width: 100%; text-align: left; background: transparent; border: none;
-    color: #8b949e; font-size: 0.82rem; padding: 8px 14px; border-radius: 4px;
+    color: #9a9a9a; font-size: 0.82rem; padding: 8px 14px; border-radius: 4px;
     transition: all 0.15s;
 }
-[data-testid="stSidebar"] .stButton > button:hover { background: #161b22; color: #c9a96e; }
-[data-testid="stSidebar"] .stButton > button:has(div p:contains(">")) { color: #c9a96e; background: rgba(201,169,110,0.08); }
+[data-testid="stSidebar"] .stButton > button:hover { background: #1a1e23; color: #FF7900; }
+[data-testid="stSidebar"] .stButton > button:has(div p:contains(">")) { color: #FF7900; background: rgba(255,121,0,0.08); }
 
 /* 按钮 */
 .stButton > button { border-radius: 4px; font-weight: 500; font-size: 0.82rem; letter-spacing: 0.02em; }
-.stButton > button[kind="primary"] { background: #c9a96e; color: #0d1117; border: none; }
-.stButton > button[kind="primary"]:hover { background: #d4a853; }
+.stButton > button[kind="primary"] { background: #FF7900; color: #FFFFFF; border: none; }
+.stButton > button[kind="primary"]:hover { background: #ff8f26; }
 
 /* 数据表 */
 [data-testid="stDataFrame"] { font-size: 0.78rem; }
-[data-testid="stDataFrame"] th { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: #8b949e; background: #0d1117; border-bottom: 1px solid #21262d; }
-[data-testid="stDataFrame"] td { border-bottom: 1px solid #161b22; color: #c9d1d9; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+[data-testid="stDataFrame"] th { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: #9a9a9a; background: #111417; border-bottom: 1px solid #2a2f36; }
+[data-testid="stDataFrame"] td { border-bottom: 1px solid #1a1e23; color: #d5d5d5; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
 
 /* 分隔线 */
-hr { border-color: #21262d !important; margin: 1rem 0 !important; }
+hr { border-color: #2a2f36 !important; margin: 1rem 0 !important; }
 
 /* 输入框 */
-input, select, textarea { background: #0d1117 !important; border: 1px solid #30363d !important; color: #e6edf3 !important; border-radius: 4px !important; }
-input:focus, select:focus { border-color: #c9a96e !important; box-shadow: 0 0 0 2px rgba(201,169,110,0.15) !important; }
+input, select, textarea { background: #111417 !important; border: 1px solid #3a4048 !important; color: #ECECEC !important; border-radius: 4px !important; }
+input:focus, select:focus { border-color: #FF7900 !important; box-shadow: 0 0 0 2px rgba(255,121,0,0.15) !important; }
 
 /* 标签页 */
-.stTabs [data-baseweb="tab"] { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: #8b949e; }
-.stTabs [aria-selected="true"] { color: #c9a96e !important; border-bottom-color: #c9a96e !important; }
+.stTabs [data-baseweb="tab"] { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: #9a9a9a; }
+.stTabs [aria-selected="true"] { color: #FF7900 !important; border-bottom-color: #FF7900 !important; }
 
 /* 展开器 */
-.streamlit-expanderHeader { font-size: 0.8rem; color: #8b949e; }
+.streamlit-expanderHeader { font-size: 0.8rem; color: #9a9a9a; }
+
+/* 提示框 */
+[data-testid="stAlert"] { background: #1a1e23; border: 1px solid #2a2f36; border-radius: 6px; }
 </style>
 """
 
@@ -116,16 +121,17 @@ def render_sidebar():
     with st.sidebar:
         # 品牌
         st.markdown(f"""
-        <div style="padding: 12px 8px 16px 8px; border-bottom: 1px solid #21262d; margin-bottom: 12px;">
-            <div style="font-size: 0.95rem; font-weight: 600; color: #e6edf3; letter-spacing: 0.02em;">光储竞争情报</div>
-            <div style="font-size: 0.65rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px;">Competitive Intelligence</div>
+        <div style="padding: 12px 8px 16px 8px; border-bottom: 1px solid #2a2f36; margin-bottom: 12px;">
+            <div style="font-size: 0.95rem; font-weight: 600; color: #ECECEC; letter-spacing: 0.02em;">
+                <span style="color:#FF7900;">■</span> 光储竞争情报</div>
+            <div style="font-size: 0.65rem; color: #9a9a9a; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px;">Competitive Intelligence</div>
         </div>""", unsafe_allow_html=True)
 
         # 用户徽章
         st.markdown(f"""
-        <div style="padding: 10px 12px; background: #161b22; border: 1px solid #21262d; border-radius: 4px; margin-bottom: 14px;">
-            <div style="font-size: 0.8rem; font-weight: 500; color: #e6edf3;">{user['display_name']}</div>
-            <div style="font-size: 0.62rem; color: #c9a96e; text-transform: uppercase; letter-spacing: 0.08em;">{role_label}</div>
+        <div style="padding: 10px 12px; background: #1a1e23; border: 1px solid #2a2f36; border-radius: 4px; margin-bottom: 14px;">
+            <div style="font-size: 0.8rem; font-weight: 500; color: #ECECEC;">{user['display_name']}</div>
+            <div style="font-size: 0.62rem; color: #FF7900; text-transform: uppercase; letter-spacing: 0.08em;">{role_label}</div>
         </div>""", unsafe_allow_html=True)
 
         # 导航
@@ -147,18 +153,17 @@ def render_sidebar():
             sections.append(("管理", [("> 账户管理", "accounts"), ("> 数据库配置", "db_config")]))
 
         for section_label, items in sections:
-            st.markdown(f'<div style="font-size:0.6rem;color:#484f58;text-transform:uppercase;letter-spacing:0.1em;padding:12px 8px 4px 8px;">{section_label}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="font-size:0.6rem;color:#606060;text-transform:uppercase;letter-spacing:0.1em;padding:12px 8px 4px 8px;">{section_label}</div>', unsafe_allow_html=True)
             for label, page in items:
                 is_active = st.session_state.get("page", "dashboard") == page
-                btn_style = "color:#c9a96e;background:rgba(201,169,110,0.08);" if is_active else ""
                 if st.button(label, key=f"nav_{page}", use_container_width=True):
                     st.session_state.page = page
                     st.rerun()
 
         # 底部
         st.markdown(f"""
-        <div style="position:fixed;bottom:16px;left:16px;font-size:0.58rem;color:#30363d;text-transform:uppercase;letter-spacing:0.08em;">
-            v3.0 | 2026E | 内部资料
+        <div style="position:fixed;bottom:16px;left:16px;font-size:0.58rem;color:#3a4048;text-transform:uppercase;letter-spacing:0.08em;">
+            v3.1 | 2026E | 内部资料
         </div>""", unsafe_allow_html=True)
 
         st.divider()
