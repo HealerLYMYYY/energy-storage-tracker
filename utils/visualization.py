@@ -107,35 +107,50 @@ def _split_periods(periods):
 def ship_trend_chart(competitors, data_map, periods):
     hist_periods, fcst_periods = _split_periods(periods)
     fig = go.Figure()
+    all_periods = hist_periods + fcst_periods
 
     for comp in competitors:
         d = data_map.get(comp["cid"], {})
         color = comp["color"]
 
-        hist_vals = [d.get(y, {}).get("total") for y in hist_periods]
-        if any(v is not None for v in hist_vals):
+        # 历史年度：只在 hist_periods 有值，其余 None
+        hist_vals = [d.get(y, {}).get("total") for y in all_periods]
+        # 预测：只在 fcst_periods 有值，历史年份 None
+        fcst_vals = []
+        for y in all_periods:
+            if y in fcst_periods:
+                fcst_vals.append(d.get(y, {}).get("total"))
+            else:
+                fcst_vals.append(None)
+
+        # 如果有历史数据，显示历史线
+        if any(v is not None for v in hist_vals[:len(hist_periods)]):
             fig.add_trace(go.Scatter(
-                x=hist_periods, y=hist_vals, name=comp["name"],
+                x=all_periods, y=hist_vals, name=comp["name"],
                 line=dict(color=color, width=2.4), mode="lines+markers",
                 marker=dict(size=5, color=color),
                 legendgroup=comp["name"], showlegend=True,
+                connectgaps=False,
             ))
 
-        fcst_vals = [d.get(y, {}).get("total") for y in fcst_periods]
+        # 预测线：从历史最后一年连接到 2026E（虚线半透明）
         if any(v is not None for v in fcst_vals):
-            fcst_x = fcst_periods.copy()
-            fcst_y = fcst_vals.copy()
-            if hist_periods and hist_vals and hist_vals[-1] is not None:
-                fcst_x = [hist_periods[-1]] + fcst_periods
-                fcst_y = [hist_vals[-1]] + fcst_vals
-
+            fcst_line_vals = []
+            for y in all_periods:
+                if y == hist_periods[-1]:
+                    fcst_line_vals.append(d.get(hist_periods[-1], {}).get("total"))
+                elif y in fcst_periods:
+                    fcst_line_vals.append(d.get(y, {}).get("total"))
+                else:
+                    fcst_line_vals.append(None)
             fig.add_trace(go.Scatter(
-                x=fcst_x, y=fcst_y, name=f"{comp['name']} (E)",
+                x=all_periods, y=fcst_line_vals, name=f"{comp['name']} (E)",
                 line=dict(color=hex_to_rgba(color, 0.70), width=2.4, dash=FORECAST_DASH),
                 mode="lines+markers",
                 marker=dict(size=5, color=hex_to_rgba(color, 0.70)),
                 fill="tozeroy", fillcolor=hex_to_rgba(color, FORECAST_FILL_ALPHA),
                 legendgroup=comp["name"], showlegend=True,
+                connectgaps=False,
             ))
 
     return _base_layout(fig, height=380, y_title="GWh")
@@ -195,9 +210,8 @@ def fin_bar_chart(competitors, data_map, field="revenue", year1="2024", year2="2
     if y2_is_fcst:
         traces.append(go.Bar(
             name=year2, x=names, y=v2,
-            marker_color=hex_to_rgba(ORANGE, FORECAST_BAR_ALPHA),
+            marker_color=hex_to_rgba(ORANGE, 0.35),
             marker_line=dict(width=1.5, color=ORANGE),
-            marker_pattern_shape="+",
         ))
     else:
         traces.append(go.Bar(name=year2, x=names, y=v2, marker_color=ORANGE))
@@ -245,7 +259,10 @@ def quarterly_stack_chart(competitors, qdata_map, metric_label="GWh"):
             width=0.45,
         ))
 
-    fig.update_layout(barmode="stack")
+    fig.update_layout(
+        barmode="stack",
+        xaxis=dict(type="category", categoryorder="array", categoryarray=names),
+    )
     return _base_layout(fig, height=420, y_title=metric_label)
 
 
@@ -451,9 +468,8 @@ def ranking_chart(rankings):
         v26 = [r.get("year_2026") or 0 for r in top10]
         traces.append(go.Bar(
             name="2026E", y=names, x=v26, orientation="h",
-            marker_color=hex_to_rgba(ORANGE, FORECAST_BAR_ALPHA),
+            marker_color=hex_to_rgba(ORANGE, 0.35),
             marker_line=dict(width=1.5, color=ORANGE),
-            marker_pattern_shape="+",
         ))
 
     fig = go.Figure(data=traces)
@@ -468,31 +484,36 @@ def ranking_chart(rankings):
 def company_trend_chart(data, periods, color, label="GWh", y_key="total"):
     hist_periods, fcst_periods = _split_periods(periods)
     fig = go.Figure()
+    all_periods = hist_periods + fcst_periods
 
-    hist_vals = [data.get(y, {}).get(y_key) for y in hist_periods]
-    if any(v is not None for v in hist_vals):
+    # 历史年度：只在 hist_periods 有值，其余 None
+    hist_vals = [data.get(y, {}).get(y_key) if y in hist_periods else None for y in all_periods]
+    if any(v is not None for v in hist_vals[:len(hist_periods)]):
         fig.add_trace(go.Scatter(
-            x=hist_periods, y=hist_vals, name=label,
+            x=all_periods, y=hist_vals, name=label,
             line=dict(color=color, width=2.5), mode="lines+markers",
             fill="tozeroy", fillcolor=hex_to_rgba(color, 0.10),
-            marker=dict(size=5),
+            marker=dict(size=5), connectgaps=False,
         ))
 
-    fcst_vals = [data.get(y, {}).get(y_key) for y in fcst_periods]
+    # 预测线：从历史最后一年连接到 2026E（虚线半透明）
+    fcst_vals = []
+    for y in all_periods:
+        if y == hist_periods[-1]:
+            fcst_vals.append(data.get(hist_periods[-1], {}).get(y_key))
+        elif y in fcst_periods:
+            fcst_vals.append(data.get(y, {}).get(y_key))
+        else:
+            fcst_vals.append(None)
     if any(v is not None for v in fcst_vals):
-        fcst_x = fcst_periods.copy()
-        fcst_y = fcst_vals.copy()
-        if hist_periods and hist_vals and hist_vals[-1] is not None:
-            fcst_x = [hist_periods[-1]] + fcst_periods
-            fcst_y = [hist_vals[-1]] + fcst_vals
-
         fig.add_trace(go.Scatter(
-            x=fcst_x, y=fcst_y, name=f"{label} (E)",
+            x=all_periods, y=fcst_vals, name=f"{label} (E)",
             line=dict(color=hex_to_rgba(color, 0.70),
                       width=2.5, dash=FORECAST_DASH),
             mode="lines+markers",
             marker=dict(size=5, color=hex_to_rgba(color, 0.70)),
             fill="tozeroy", fillcolor=hex_to_rgba(color, FORECAST_FILL_ALPHA),
+            connectgaps=False,
         ))
 
     return _base_layout(fig, height=380)

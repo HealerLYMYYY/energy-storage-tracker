@@ -9,19 +9,6 @@ from utils.visualization import (company_trend_chart, cost_price_chart, combo_an
                                  ORANGE, BLUE, TEAL)
 
 
-def _comp_button(c, is_active):
-    """公司选择按钮卡片"""
-    bg = "rgba(201,112,42,0.12)" if is_active else "#1a1e23"
-    border = c["color"] if is_active else "#2a2f36"
-    text_color = "#ECECEC" if is_active else "#9a9a9a"
-    return f"""
-    <div style="background:{bg};border:1px solid {border};border-radius:6px;padding:8px 4px;text-align:center;
-                cursor:pointer;transition:all 0.15s;margin-bottom:6px;">
-        <div style="font-size:0.72rem;font-weight:600;color:{text_color};">{c['name']}</div>
-        <div style="font-size:0.52rem;color:#9a9a9a;margin-top:1px;">{c['ticker']}</div>
-    </div>"""
-
-
 def show_company():
     competitors = get_competitors()
     if "selected_company" not in st.session_state:
@@ -40,11 +27,7 @@ def show_company():
                 break
             c = competitors[idx]
             with cols[i]:
-                is_active = c["name"] == st.session_state.selected_company
-                # 用 st.button 接收点击，但外面套 HTML 卡片样式
-                if st.button(f"选择 {c['name']}", key=f"comp_{c['cid']}",
-                             use_container_width=True, type="primary" if is_active else "secondary",
-                             label_visibility="collapsed"):
+                if st.button(c["name"], key=f"comp_{c['cid']}", use_container_width=True):
                     st.session_state.selected_company = c["name"]
                     st.rerun()
 
