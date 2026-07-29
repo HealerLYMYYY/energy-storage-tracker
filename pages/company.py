@@ -5,7 +5,21 @@ import pandas as pd
 import plotly.graph_objects as go
 from utils.data_manager import get_competitors, get_shipment, get_cost, get_financial, get_shipment_quarters
 from utils.visualization import (company_trend_chart, cost_price_chart, combo_annual_quarterly,
-                                 margin_quarterly_chart, hex_to_rgba, FORECAST_PERIOD)
+                                 margin_quarterly_chart, hex_to_rgba, FORECAST_PERIOD,
+                                 ORANGE, BLUE, TEAL)
+
+
+def _comp_button(c, is_active):
+    """公司选择按钮卡片"""
+    bg = "rgba(201,112,42,0.12)" if is_active else "#1a1e23"
+    border = c["color"] if is_active else "#2a2f36"
+    text_color = "#ECECEC" if is_active else "#9a9a9a"
+    return f"""
+    <div style="background:{bg};border:1px solid {border};border-radius:6px;padding:8px 4px;text-align:center;
+                cursor:pointer;transition:all 0.15s;margin-bottom:6px;">
+        <div style="font-size:0.72rem;font-weight:600;color:{text_color};">{c['name']}</div>
+        <div style="font-size:0.52rem;color:#9a9a9a;margin-top:1px;">{c['ticker']}</div>
+    </div>"""
 
 
 def show_company():
@@ -17,15 +31,22 @@ def show_company():
 
     st.markdown('<h1>公司情报</h1>', unsafe_allow_html=True)
 
-    # ——— 公司选择器 ———
-    cols = st.columns(9)
-    for i, c in enumerate(competitors):
-        with cols[i]:
-            is_active = c["name"] == st.session_state.selected_company
-            if st.button(c["name"], key=f"comp_{c['cid']}", use_container_width=True,
-                         type="primary" if is_active else "secondary"):
-                st.session_state.selected_company = c["name"]
-                st.rerun()
+    # ——— 公司选择器：3 行 × 3 列 ———
+    for row in range(3):
+        cols = st.columns(3)
+        for i in range(3):
+            idx = row * 3 + i
+            if idx >= len(competitors):
+                break
+            c = competitors[idx]
+            with cols[i]:
+                is_active = c["name"] == st.session_state.selected_company
+                # 用 st.button 接收点击，但外面套 HTML 卡片样式
+                if st.button(f"选择 {c['name']}", key=f"comp_{c['cid']}",
+                             use_container_width=True, type="primary" if is_active else "secondary",
+                             label_visibility="collapsed"):
+                    st.session_state.selected_company = c["name"]
+                    st.rerun()
 
     comp = comp_map[st.session_state.selected_company]
     cid = comp["cid"]
@@ -54,11 +75,14 @@ def show_company():
     # ——— 公司头部 ———
     st.markdown(f"""
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-        <div style="width:44px;height:44px;border:1px solid #2a2f36;border-radius:4px;background:#1a1e23;
-                    display:flex;align-items:center;justify-content:center;color:{comp['color']};font-size:1.1rem;font-weight:600;">{comp['name'][0]}</div>
+        <div style="width:48px;height:48px;border:1px solid {comp['color']};border-radius:6px;background:#1a1e23;
+                    display:flex;align-items:center;justify-content:center;color:{comp['color']};font-size:1.2rem;font-weight:600;">
+            {comp['name'][0]}</div>
         <div>
-            <div style="font-size:1.1rem;font-weight:600;color:#ECECEC;">{comp['name']}<span style="font-size:0.7rem;color:#9a9a9a;margin-left:10px;">{comp['ticker']}</span></div>
-            <div style="font-size:0.7rem;color:#9a9a9a;">{comp['company_type']} · {comp['description'][:60]}...</div>
+            <div style="font-size:1.15rem;font-weight:600;color:#ECECEC;">{comp['name']}
+                <span style="font-size:0.7rem;color:#9a9a9a;margin-left:10px;">{comp['ticker']}</span>
+            </div>
+            <div style="font-size:0.72rem;color:#9a9a9a;">{comp['company_type']} · {comp['description'][:70]}...</div>
         </div>
     </div>""", unsafe_allow_html=True)
 
@@ -92,12 +116,19 @@ def show_company():
             dom = [ship_data.get(y, {}).get("domestic", 0) or 0 for y in periods]
             exp = [ship_data.get(y, {}).get("export", 0) or 0 for y in periods]
             fig2 = go.Figure(data=[
-                go.Bar(name="国内", x=periods, y=dom, marker_color="rgba(255,121,0,0.85)"),
-                go.Bar(name="海外", x=periods, y=exp, marker_color="rgba(110,146,255,0.85)")
+                go.Bar(name="国内", x=periods, y=dom, marker_color=ORANGE),
+                go.Bar(name="海外", x=periods, y=exp, marker_color=BLUE)
             ])
-            fig2.update_layout(barmode="stack", margin=dict(l=20, r=20, t=10, b=20),
-                               plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-                               font=dict(color="#9a9a9a"), legend=dict(font=dict(color="#9a9a9a")))
+            fig2.update_layout(
+                barmode="stack", height=420,
+                margin=dict(l=20, r=20, t=40, b=20),
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="#9a9a9a", size=11),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
+                            font=dict(color="#9a9a9a", size=10), bgcolor="rgba(0,0,0,0)"),
+                xaxis=dict(gridcolor="rgba(58,64,72,0.35)", zeroline=False),
+                yaxis=dict(gridcolor="rgba(58,64,72,0.35)", zeroline=False, title="GWh")
+            )
             st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 
         # ——— 第二行：营收组合图 + 净利润组合图 ———

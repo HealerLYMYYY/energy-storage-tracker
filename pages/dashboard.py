@@ -4,8 +4,23 @@ import streamlit as st
 import pandas as pd
 from utils.data_manager import (get_competitors, get_all_shipments, get_financial, get_cost,
                                 get_shipment_quarters)
-from utils.visualization import (ship_trend_chart, ship_stack_chart, quarterly_stack_chart,
-                                 FORECAST_PERIOD)
+from utils.visualization import (ship_trend_chart, ship_stack_chart, quarterly_stack_chart)
+
+
+def _card(name, ticker, value, delta, color):
+    delta_color = color if delta and delta > 0 else "#9a9a9a"
+    delta_str = f"{delta:+.1f}%" if delta else "—"
+    value_str = f"{value:.1f}" if value else "—"
+    return f"""
+    <div style="background:#1a1e23;border:1px solid #2a2f36;border-radius:6px;padding:14px 8px;text-align:center;
+                border-top:3px solid {color};min-height:110px;display:flex;flex-direction:column;justify-content:center;">
+        <div style="font-size:0.78rem;font-weight:600;color:#ECECEC;">{name}</div>
+        <div style="font-size:0.6rem;color:#9a9a9a;margin-top:2px;">{ticker}</div>
+        <div style="font-size:1.05rem;font-weight:600;color:#ECECEC;margin-top:8px;font-family:'JetBrains Mono',monospace;">
+            {value_str}</div>
+        <div style="font-size:0.6rem;color:#9a9a9a;margin-top:2px;">GWh (2026E)</div>
+        <div style="font-size:0.65rem;color:{delta_color};margin-top:2px;font-weight:500;">{delta_str}</div>
+    </div>"""
 
 
 def show_dashboard():
@@ -57,25 +72,21 @@ def show_dashboard():
 
     # ——— 同业卡片 ———
     st.markdown('<h3>同业公司 · 2026E</h3>', unsafe_allow_html=True)
-    cols = st.columns(9)
-    for i, c in enumerate(competitors):
-        with cols[i]:
-            s26 = ship_map.get(c["cid"], {}).get("2026E", {})
-            s25 = ship_map.get(c["cid"], {}).get("2025", {})
-            v26 = s26.get("total")
-            v25 = s25.get("total", 0) or 0
-            delta = (v26 - v25) / v25 * 100 if v26 and v25 else 0
-            delta_str = f"{delta:+.1f}%" if delta else "—"
-            v26_str = f"{v26:.1f}" if v26 else "—"
-            st.markdown(f"""
-            <div style="background:#1a1e23;border:1px solid #2a2f36;border-radius:4px;padding:10px 8px;text-align:center;
-                        border-top:2px solid {c['color']};">
-                <div style="font-size:0.75rem;font-weight:600;color:#ECECEC;">{c['name']}</div>
-                <div style="font-size:0.6rem;color:#9a9a9a;">{c['ticker']}</div>
-                <div style="font-size:0.85rem;font-weight:600;color:#FF7900;margin-top:6px;font-family:'JetBrains Mono',monospace;">
-                    {v26_str}</div>
-                <div style="font-size:0.55rem;color:#9a9a9a;">GWh (2026E) <span style="color:#FF7900;">{delta_str}</span></div>
-            </div>""", unsafe_allow_html=True)
+    # 9 家公司分 3 行展示，每行 3 个，避免过窄导致文字拥挤
+    for row in range(3):
+        cols = st.columns(3)
+        for i in range(3):
+            idx = row * 3 + i
+            if idx >= len(competitors):
+                break
+            c = competitors[idx]
+            with cols[i]:
+                s26 = ship_map.get(c["cid"], {}).get("2026E", {})
+                s25 = ship_map.get(c["cid"], {}).get("2025", {})
+                v26 = s26.get("total")
+                v25 = s25.get("total", 0) or 0
+                delta = (v26 - v25) / v25 * 100 if v26 and v25 else 0
+                st.markdown(_card(c["name"], c["ticker"], v26, delta, c["color"]), unsafe_allow_html=True)
 
     st.divider()
 

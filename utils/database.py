@@ -305,23 +305,24 @@ def _dict_row(row):
 # ============================================================
 
 COMPETITORS_SEED = [
-    ("catl", "宁德时代", "CATL", "300750.SZ", "电池/系统", "#ff7b00",
+    # 莫兰迪高级色板：降低饱和度，避免撞色，参考 BCG/McKinsey 机构风格
+    ("catl", "宁德时代", "CATL", "300750.SZ", "电池/系统", "#C9702A",
      "宁德时代 CATL 麒麟电池 神行电池", "全球领先的动力电池与储能电池制造商", "https://www.catl.com", 1),
-    ("byd", "比亚迪", "BYD", "002594.SZ", "电池/系统", "#54b86b",
+    ("byd", "比亚迪", "BYD", "002594.SZ", "电池/系统", "#5A7A96",
      "比亚迪 弗迪电池 刀片电池", "新能源汽车与电池垂直整合企业", "https://www.byd.com", 2),
-    ("hb", "海博思创", "Hyperstrong", "688411.SH", "储能系统", "#55b8b4",
+    ("hb", "海博思创", "Hyperstrong", "688411.SH", "储能系统", "#7A9B76",
      "海博思创 Hyperstrong", "国内储能系统集成龙头", "https://www.hyperstrong.com.cn", 3),
-    ("hc", "海辰储能", "HiTHIUM", "未上市", "储能电池", "#6e8efb",
+    ("hc", "海辰储能", "HiTHIUM", "未上市", "储能电池", "#8B7DA8",
      "海辰储能 HiTHIUM", "快速崛起的储能电池新势力", "https://www.hithium.com", 4),
-    ("tesla", "Tesla", "Tesla", "TSLA", "综合能源", "#e85d75",
+    ("tesla", "Tesla", "Tesla", "TSLA", "综合能源", "#B85C5C",
      "Tesla Megapack Powerwall", "全球综合能源标杆企业", "https://www.tesla.com", 5),
-    ("tc", "天合储能", "TrinaStorage", "688599.SH", "光储一体", "#f5a623",
+    ("tc", "天合储能", "TrinaStorage", "688599.SH", "光储一体", "#C9A227",
      "天合光能 天合储能 TrinaStorage", "光伏+储能一体化企业", "https://www.trinasolar.com", 6),
-    ("deye", "德业股份", "Deye", "605117.SH", "逆变器", "#55b8b4",
+    ("deye", "德业股份", "Deye", "605117.SH", "逆变器", "#5A9A8F",
      "德业股份 Deye", "逆变器+储能系统双轮驱动", "https://www.deye.com.cn", 7),
-    ("sg", "思格新能源", "Sigenergy", "未上市", "储能系统", "#54b86b",
+    ("sg", "思格新能源", "Sigenergy", "未上市", "储能系统", "#A68B6A",
      "思格新能源 Sigenergy", "专注海外户用储能市场", "https://www.sigenergy.com", 8),
-    ("flu", "Fluence", "Fluence", "FLNC", "储能系统", "#6e8efb",
+    ("flu", "Fluence", "Fluence", "FLNC", "储能系统", "#6A7B8A",
      "Fluence Energy", "全球储能系统集成商", "https://fluenceenergy.com", 9),
 ]
 
@@ -495,6 +496,11 @@ def seed_all_data():
             for comp in COMPETITORS_SEED:
                 ph = "(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" if USE_PG else "(?,?,?,?,?,?,?,?,?,?)"
                 c.execute(f"INSERT INTO competitors (cid,name,name_en,ticker,company_type,color,keywords,description,website,sort_order) VALUES {ph}", comp)
+        else:
+            # 同步竞对公司颜色（品牌色系升级时更新现有数据库）
+            for comp in COMPETITORS_SEED:
+                c.execute(f"UPDATE competitors SET color={'%s' if USE_PG else '?'} WHERE cid={'%s' if USE_PG else '?'}",
+                          (comp[5], comp[0]))
 
         # 出货量
         c.execute("SELECT COUNT(*) as cnt FROM shipment_data")

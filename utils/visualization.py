@@ -1,5 +1,5 @@
-"""可视化 — 品牌色系 Plotly 图表
-主色: 橙 #FF7900 | 辅助: 黄#EEB83F 绿#54B244 青#55BABE 蓝#6E92FF 深青#2B686F
+"""可视化 — 高级莫兰迪色系 Plotly 图表
+参考 BCG / McKinsey 机构风格：低饱和、克制、信息密度高
 2026E: 季度堆积柱状图（Q1-Q4 相加 = 全年预测）
 """
 
@@ -11,41 +11,52 @@ import pandas as pd
 # ——— 主题常量 ———
 BG = "rgba(0,0,0,0)"
 FONT_COLOR = "#9a9a9a"
-GRID_COLOR = "rgba(58,64,72,0.4)"
-MARGIN = dict(l=20, r=20, t=30, b=20)
-LEGEND = dict(font=dict(color=FONT_COLOR, size=10))
+TITLE_COLOR = "#ECECEC"
+GRID_COLOR = "rgba(58,64,72,0.35)"
+MARGIN = dict(l=20, r=20, t=50, b=20)
+LEGEND_TOP = dict(
+    orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
+    font=dict(color=FONT_COLOR, size=10), bgcolor="rgba(0,0,0,0)",
+    bordercolor="rgba(0,0,0,0)", borderwidth=0
+)
+LEGEND_RIGHT = dict(
+    orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.02,
+    font=dict(color=FONT_COLOR, size=10), bgcolor="rgba(0,0,0,0)"
+)
 
-# ——— 品牌色板 ———
-ORANGE = "rgba(255,121,0,0.92)"      # 主橙
-ORANGE_LIGHT = "rgba(255,121,0,0.40)"
-YELLOW = "rgba(238,184,63,0.92)"     # 黄
-GREEN = "rgba(84,178,68,0.92)"       # 绿
-TEAL = "rgba(85,186,190,0.92)"       # 青
-BLUE = "rgba(110,146,255,0.92)"      # 蓝
-DARKTEAL = "rgba(43,104,111,0.92)"   # 深青
-GRAY = "rgba(96,96,96,0.60)"         # 灰（历史对比）
-DARK = "rgba(58,64,72,0.6)"
+# ——— 品牌色板（莫兰迪 / 低饱和） ———
+ORANGE = "#C9702A"       # 主橙（克制）
+ORANGE_LIGHT = "#DDA470"  # 浅橙
+YELLOW = "#C9A227"
+GREEN = "#7A9B76"
+TEAL = "#5A9A8F"
+BLUE = "#5A7A96"
+PURPLE = "#8B7DA8"
+RED = "#B85C5C"
+TAN = "#A68B6A"
+STEEL = "#6A7B8A"
+GRAY = "#6B7280"         # 历史对比/次要
 
-# 季度配色（Q1→Q4 由暖到冷，符合时间推进感）
-Q_COLORS = [
-    "rgba(255,121,0,0.92)",   # Q1 橙
-    "rgba(238,184,63,0.92)",  # Q2 黄
-    "rgba(85,186,190,0.85)",  # Q3 青
-    "rgba(110,146,255,0.85)", # Q4 蓝
-]
-# 未来季度（预测）透明度
-Q_COLORS_FUTURE = [
-    "rgba(255,121,0,0.92)",
-    "rgba(238,184,63,0.92)",
-    "rgba(85,186,190,0.45)",
-    "rgba(110,146,255,0.45)",
-]
+# 季度配色（Q1→Q4：暖 → 冷，时间推进感，均低饱和）
+Q_COLORS = {
+    "Q1": "#C9702A",   # 暖橙
+    "Q2": "#C9A227",   # 暖黄
+    "Q3": "#5A9A8F",   # 青绿
+    "Q4": "#5A7A96",   # 雾蓝
+}
+# 未来季度（预测）：同色相但更浅更柔和，避免在深色背景变浑浊
+Q_COLORS_FUTURE = {
+    "Q1": "#DDA470",
+    "Q2": "#D6B85A",
+    "Q3": "#85B5AC",
+    "Q4": "#8AA3B8",
+}
 
 FORECAST_PERIOD = "2026E"
 FORECAST_DASH = "dash"
-FORECAST_FILL_ALPHA = 0.06
+FORECAST_FILL_ALPHA = 0.08
 FORECAST_MARKER_ALPHA = 0.55
-FORECAST_BAR_ALPHA = 0.50
+FORECAST_BAR_ALPHA = 0.55
 
 
 def current_completed_quarters():
@@ -55,8 +66,8 @@ def current_completed_quarters():
         return ["Q1", "Q2", "Q3", "Q4"]
     if now.year < 2026:
         return []
-    current_q = (now.month - 1) // 3 + 1  # 当前进行中季度
-    return [f"Q{i}" for i in range(1, current_q)]  # 已完成的季度
+    current_q = (now.month - 1) // 3 + 1
+    return [f"Q{i}" for i in range(1, current_q)]
 
 
 def hex_to_rgba(hex_color, alpha=0.2):
@@ -67,11 +78,19 @@ def hex_to_rgba(hex_color, alpha=0.2):
     return f"rgba({r},{g},{b},{alpha})"
 
 
-def _base_layout(fig, **kw):
-    fig.update_layout(hovermode="x unified", margin=MARGIN, legend=LEGEND,
-                      plot_bgcolor=BG, paper_bgcolor=BG, font=dict(color=FONT_COLOR),
-                      xaxis=dict(gridcolor=GRID_COLOR, zeroline=False),
-                      yaxis=dict(gridcolor=GRID_COLOR, zeroline=False), **kw)
+def _base_layout(fig, height=420, legend=None, y_title=None, x_title=None, **kw):
+    fig.update_layout(
+        height=height,
+        hovermode="x unified",
+        margin=MARGIN,
+        legend=legend or LEGEND_TOP,
+        plot_bgcolor=BG,
+        paper_bgcolor=BG,
+        font=dict(color=FONT_COLOR, size=11, family="Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif"),
+        xaxis=dict(gridcolor=GRID_COLOR, zeroline=False, title=x_title),
+        yaxis=dict(gridcolor=GRID_COLOR, zeroline=False, title=y_title),
+        **kw
+    )
     return fig
 
 
@@ -97,7 +116,7 @@ def ship_trend_chart(competitors, data_map, periods):
         if any(v is not None for v in hist_vals):
             fig.add_trace(go.Scatter(
                 x=hist_periods, y=hist_vals, name=comp["name"],
-                line=dict(color=color, width=2.2), mode="lines+markers",
+                line=dict(color=color, width=2.4), mode="lines+markers",
                 marker=dict(size=5, color=color),
                 legendgroup=comp["name"], showlegend=True,
             ))
@@ -112,14 +131,14 @@ def ship_trend_chart(competitors, data_map, periods):
 
             fig.add_trace(go.Scatter(
                 x=fcst_x, y=fcst_y, name=f"{comp['name']} (E)",
-                line=dict(color=hex_to_rgba(color, FORECAST_MARKER_ALPHA), width=2.2, dash=FORECAST_DASH),
+                line=dict(color=hex_to_rgba(color, 0.70), width=2.4, dash=FORECAST_DASH),
                 mode="lines+markers",
-                marker=dict(size=5, color=hex_to_rgba(color, FORECAST_MARKER_ALPHA)),
+                marker=dict(size=5, color=hex_to_rgba(color, 0.70)),
                 fill="tozeroy", fillcolor=hex_to_rgba(color, FORECAST_FILL_ALPHA),
                 legendgroup=comp["name"], showlegend=True,
             ))
 
-    return _base_layout(fig)
+    return _base_layout(fig, height=380, y_title="GWh")
 
 
 # ================================================================
@@ -129,29 +148,36 @@ def ship_trend_chart(competitors, data_map, periods):
 def ship_stack_chart(competitors, data_map, period="2025", mode="region"):
     names = [c["name"] for c in competitors]
     is_forecast = (period == FORECAST_PERIOD)
-    alpha = FORECAST_BAR_ALPHA if is_forecast else 0.92
+    alpha = FORECAST_BAR_ALPHA if is_forecast else 1.0
+
+    def _color(hex_c, a):
+        return hex_to_rgba(hex_c, a)
 
     if mode == "region":
         d1 = [data_map.get(c["cid"], {}).get(period, {}).get("domestic", 0) or 0 for c in competitors]
         d2 = [data_map.get(c["cid"], {}).get(period, {}).get("export", 0) or 0 for c in competitors]
         fig = go.Figure(data=[
-            go.Bar(name="国内", x=names, y=d1, marker_color=f"rgba(255,121,0,{alpha})"),
-            go.Bar(name="海外", x=names, y=d2, marker_color=f"rgba(110,146,255,{alpha})")
+            go.Bar(name="国内", x=names, y=d1, marker_color=_color(ORANGE, alpha)),
+            go.Bar(name="海外", x=names, y=d2, marker_color=_color(BLUE, alpha))
         ])
     else:
         d1 = [data_map.get(c["cid"], {}).get(period, {}).get("residential", 0) or 0 for c in competitors]
         d2 = [data_map.get(c["cid"], {}).get(period, {}).get("utility", 0) or 0 for c in competitors]
         d3 = [data_map.get(c["cid"], {}).get(period, {}).get("commercial", 0) or 0 for c in competitors]
         fig = go.Figure(data=[
-            go.Bar(name="户用", x=names, y=d1, marker_color=f"rgba(255,121,0,{alpha})"),
-            go.Bar(name="大储", x=names, y=d2, marker_color=f"rgba(110,146,255,{alpha})"),
-            go.Bar(name="工商业", x=names, y=d3, marker_color=f"rgba(85,186,190,{alpha})")
+            go.Bar(name="户用", x=names, y=d1, marker_color=_color(ORANGE, alpha)),
+            go.Bar(name="大储", x=names, y=d2, marker_color=_color(BLUE, alpha)),
+            go.Bar(name="工商业", x=names, y=d3, marker_color=_color(TEAL, alpha))
         ])
     fig.update_layout(barmode="stack")
     if is_forecast:
-        fig.update_layout(title=dict(text="▨ 预测", font=dict(size=10, color="#FF7900"),
-                                     x=1, y=0.99, xanchor="right"))
-    return _base_layout(fig)
+        fig.add_annotation(
+            text="预测", xref="paper", yref="paper",
+            x=0.98, y=0.98, showarrow=False,
+            font=dict(size=10, color=ORANGE),
+            bgcolor="rgba(17,20,23,0.7)", bordercolor=ORANGE, borderwidth=1, borderpad=3
+        )
+    return _base_layout(fig, height=380, y_title="GWh")
 
 
 # ================================================================
@@ -164,25 +190,28 @@ def fin_bar_chart(competitors, data_map, field="revenue", year1="2024", year2="2
     v2 = [data_map.get(c["cid"], {}).get(year2, {}).get(field) or 0 for c in competitors]
 
     y2_is_fcst = (year2 == FORECAST_PERIOD)
-    y2_label = f"{year2}" if y2_is_fcst else year2
 
     traces = [go.Bar(name=year1, x=names, y=v1, marker_color=GRAY)]
     if y2_is_fcst:
         traces.append(go.Bar(
-            name=y2_label, x=names, y=v2,
-            marker_color=f"rgba(255,121,0,{FORECAST_BAR_ALPHA})",
-            marker_line=dict(width=1.5, color="rgba(255,121,0,0.5)"),
-            marker_pattern_shape="/",
+            name=year2, x=names, y=v2,
+            marker_color=hex_to_rgba(ORANGE, FORECAST_BAR_ALPHA),
+            marker_line=dict(width=1.5, color=ORANGE),
+            marker_pattern_shape="+",
         ))
     else:
-        traces.append(go.Bar(name=y2_label, x=names, y=v2, marker_color=ORANGE))
+        traces.append(go.Bar(name=year2, x=names, y=v2, marker_color=ORANGE))
 
     fig = go.Figure(data=traces)
     fig.update_layout(barmode="group")
     if y2_is_fcst:
-        fig.update_layout(title=dict(text="▨ 预测", font=dict(size=10, color="#FF7900"),
-                                     x=1, y=0.99, xanchor="right"))
-    return _base_layout(fig)
+        fig.add_annotation(
+            text="预测", xref="paper", yref="paper",
+            x=0.98, y=0.98, showarrow=False,
+            font=dict(size=10, color=ORANGE),
+            bgcolor="rgba(17,20,23,0.7)", bordercolor=ORANGE, borderwidth=1, borderpad=3
+        )
+    return _base_layout(fig, height=380)
 
 
 # ================================================================
@@ -191,8 +220,7 @@ def fin_bar_chart(competitors, data_map, field="revenue", year1="2024", year2="2
 
 def quarterly_stack_chart(competitors, qdata_map, metric_label="GWh"):
     """x = Q1..Q4，每个季度的柱子按公司堆积。
-    qdata_map: {cid: {"Q1": v, "Q2": v, "Q3": v, "Q4": v}}
-    已完成季度实色，未来季度半透明（预测）。"""
+    已完成季度用公司原色，未来季度用 pastel 浅色（预测）。"""
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     completed = current_completed_quarters()
     fig = go.Figure()
@@ -202,24 +230,27 @@ def quarterly_stack_chart(competitors, qdata_map, metric_label="GWh"):
         vals = [qd.get(q) or 0 for q in quarters]
         if not any(vals):
             continue
-        # 每根柱子按季度调整透明度（未来季度=预测=半透明）
-        color_hex = comp["color"]
-        bar_colors = [
-            hex_to_rgba(color_hex, 0.92) if q in completed else hex_to_rgba(color_hex, 0.42)
-            for q in quarters
-        ]
+        base_color = comp["color"]
+        bar_colors = []
+        for q in quarters:
+            if q in completed:
+                bar_colors.append(base_color)
+            else:
+                bar_colors.append(hex_to_rgba(base_color, 0.45))
         fig.add_trace(go.Bar(
             name=comp["name"], x=quarters, y=vals,
             marker=dict(color=bar_colors),
         ))
 
     fig.update_layout(barmode="stack")
-    fig.update_layout(
-        annotations=[dict(
-            text="半透明 = 未来季度预测", xref="paper", yref="paper",
-            x=1, y=1.06, xanchor="right", showarrow=False,
-            font=dict(size=10, color="#FF7900"))])
-    return _base_layout(fig)
+    # 在图表内部右下角加小标签，不占用顶部空间
+    fig.add_annotation(
+        text="▨ 浅色 = 未来季度预测", xref="paper", yref="paper",
+        x=0.99, y=0.02, showarrow=False, xanchor="right", yanchor="bottom",
+        font=dict(size=9, color=FONT_COLOR),
+        bgcolor="rgba(17,20,23,0.6)", borderpad=3
+    )
+    return _base_layout(fig, height=420, y_title=metric_label)
 
 
 # ================================================================
@@ -227,10 +258,7 @@ def quarterly_stack_chart(competitors, qdata_map, metric_label="GWh"):
 # ================================================================
 
 def combo_annual_quarterly(annual_data, quarters_data, color, label="GWh", unit=""):
-    """单公司：2022-2025 年度柱 + 2026E 一根堆积柱（Q1-Q4 分段）。
-    annual_data: {"2022": v, "2023": v, ...}
-    quarters_data: {"Q1": v, "Q2": v, "Q3": v, "Q4": v}
-    """
+    """单公司：2022-2025 年度柱 + 2026E 一根堆积柱（Q1-Q4 分段）。"""
     years = ["2022", "2023", "2024", "2025"]
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     completed = current_completed_quarters()
@@ -241,34 +269,27 @@ def combo_annual_quarterly(annual_data, quarters_data, color, label="GWh", unit=
     annual_vals = [annual_data.get(y) for y in years]
     fig.add_trace(go.Bar(
         x=years, y=annual_vals, name=label,
-        marker_color=hex_to_rgba(color, 0.85),
+        marker_color=color,
+        width=0.55,
     ))
 
     # 2026E 季度堆积
-    q_colors = []
-    for i, q in enumerate(quarters):
-        base = Q_COLORS[i]
-        if q in completed:
-            q_colors.append(base)
-        else:
-            q_colors.append(Q_COLORS_FUTURE[i])
-
-    for i, q in enumerate(quarters):
+    for q in quarters:
         v = quarters_data.get(q)
+        q_color = Q_COLORS[q] if q in completed else Q_COLORS_FUTURE[q]
         fig.add_trace(go.Bar(
             x=["2026E"], y=[v or 0], name=f"2026 {q}",
-            marker_color=q_colors[i],
+            marker_color=q_color,
+            width=0.55,
         ))
 
     fig.update_layout(barmode="relative")
-    fig.update_layout(
-        annotations=[dict(
-            text="2026E = Q1+Q2+Q3+Q4 堆积", xref="paper", yref="paper",
-            x=1, y=1.06, xanchor="right", showarrow=False,
-            font=dict(size=10, color="#FF7900"))])
-    if unit:
-        fig.update_layout(yaxis_title=unit)
-    return _base_layout(fig)
+    fig.add_annotation(
+        text="2026E = Q1+Q2+Q3+Q4", xref="paper", yref="paper",
+        x=0.99, y=1.02, showarrow=False, xanchor="right", yanchor="bottom",
+        font=dict(size=9, color=FONT_COLOR)
+    )
+    return _base_layout(fig, height=420, y_title=unit or label)
 
 
 # ================================================================
@@ -276,10 +297,7 @@ def combo_annual_quarterly(annual_data, quarters_data, color, label="GWh", unit=
 # ================================================================
 
 def margin_quarterly_chart(fin_2026, hist_fin, color):
-    """季度净利率折线（2026 各季度）+ 年度毛利率参考线 + 历史净利率点。
-    fin_2026: {"rv_q1":.., "np_q1":.., "gross_margin":..}
-    hist_fin: {"2022": {"net_margin":..}, ...}
-    """
+    """季度净利率折线（2026 各季度）+ 年度毛利率参考线 + 历史净利率点。"""
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     completed = current_completed_quarters()
     fig = go.Figure()
@@ -297,7 +315,7 @@ def margin_quarterly_chart(fin_2026, hist_fin, color):
     if any(v is not None for v in done_y):
         fig.add_trace(go.Scatter(
             x=done_x, y=done_y, name="季度净利率",
-            line=dict(color=hex_to_rgba(color, 0.95), width=2.5),
+            line=dict(color=color, width=2.5),
             mode="lines+markers", marker=dict(size=7),
         ))
 
@@ -307,20 +325,41 @@ def margin_quarterly_chart(fin_2026, hist_fin, color):
         fx = ([done_x[-1]] if done_x else []) + fcst_x
         fy = ([done_y[-1]] if done_y else []) + [nm_q[quarters.index(q)] for q in fcst_x]
         fig.add_trace(go.Scatter(
-            x=fx, y=fy, name="净利率 (预测)",
-            line=dict(color=hex_to_rgba(color, 0.5), width=2.5, dash="dash"),
-            mode="lines+markers", marker=dict(size=7, color=hex_to_rgba(color, 0.5)),
+            x=fx, y=fy, name="季度净利率 (预测)",
+            line=dict(color=hex_to_rgba(color, 0.55), width=2.5, dash="dash"),
+            mode="lines+markers", marker=dict(size=7, color=hex_to_rgba(color, 0.55)),
         ))
 
     # 2026E 毛利率参考线（年度预测值）
     gm = fin_2026.get("gross_margin")
     if gm:
-        fig.add_hline(y=gm, line=dict(color="rgba(238,184,63,0.6)", width=1.5, dash="dot"),
-                      annotation_text=f"毛利率 {gm:.1f}%", annotation_font=dict(size=9, color="#EEB83F"),
+        fig.add_hline(y=gm, line=dict(color=YELLOW, width=1.5, dash="dot"),
+                      annotation_text=f"毛利率 {gm:.1f}%",
+                      annotation_font=dict(size=9, color=YELLOW),
                       annotation_position="top right")
 
-    fig.update_layout(yaxis_title="%")
-    return _base_layout(fig)
+    # 历史年度净利率点
+    hist_years = ["2022", "2023", "2024", "2025"]
+    hist_x, hist_y = [], []
+    for y in hist_years:
+        nm = hist_fin.get(y, {}).get("net_margin")
+        if nm is not None:
+            hist_x.append(y)
+            hist_y.append(nm)
+    if hist_y:
+        fig.add_trace(go.Scatter(
+            x=hist_x, y=hist_y, name="年度净利率",
+            mode="markers", marker=dict(size=8, color=GRAY, symbol="diamond"),
+        ))
+
+    fig.add_annotation(
+        text="虚线/浅色 = 预测", xref="paper", yref="paper",
+        x=0.99, y=0.02, showarrow=False, xanchor="right", yanchor="bottom",
+        font=dict(size=9, color=FONT_COLOR),
+        bgcolor="rgba(17,20,23,0.6)", borderpad=3
+    )
+
+    return _base_layout(fig, height=420, y_title="%")
 
 
 # ================================================================
@@ -330,14 +369,10 @@ def margin_quarterly_chart(fin_2026, hist_fin, color):
 def qtr_bar_chart(competitors, data_map, field="rv", year="2025"):
     names = [c["name"] for c in competitors]
     is_forecast = (year == FORECAST_PERIOD)
-    alpha = FORECAST_BAR_ALPHA if is_forecast else 0.92
+    alpha = FORECAST_BAR_ALPHA if is_forecast else 1.0
 
-    q_colors = [
-        f"rgba(255,121,0,{alpha})",
-        f"rgba(238,184,63,{alpha})",
-        f"rgba(85,186,190,{alpha})",
-        f"rgba(110,146,255,{alpha})",
-    ]
+    q_colors = [hex_to_rgba(Q_COLORS["Q1"], alpha), hex_to_rgba(Q_COLORS["Q2"], alpha),
+                hex_to_rgba(Q_COLORS["Q3"], alpha), hex_to_rgba(Q_COLORS["Q4"], alpha)]
 
     q1 = [data_map.get(c["cid"], {}).get(year, {}).get(f"{field}_q1") or 0 for c in competitors]
     q2 = [data_map.get(c["cid"], {}).get(year, {}).get(f"{field}_q2") or 0 for c in competitors]
@@ -352,9 +387,13 @@ def qtr_bar_chart(competitors, data_map, field="rv", year="2025"):
     ])
     fig.update_layout(barmode="stack")
     if is_forecast:
-        fig.update_layout(title=dict(text="▨ 预测", font=dict(size=10, color="#FF7900"),
-                                     x=1, y=0.99, xanchor="right"))
-    return _base_layout(fig)
+        fig.add_annotation(
+            text="预测", xref="paper", yref="paper",
+            x=0.98, y=0.98, showarrow=False,
+            font=dict(size=10, color=ORANGE),
+            bgcolor="rgba(17,20,23,0.7)", bordercolor=ORANGE, borderwidth=1, borderpad=3
+        )
+    return _base_layout(fig, height=380)
 
 
 # ================================================================
@@ -374,9 +413,13 @@ def cost_margin_scatter(competitors, cost_map, margin_map, period="2025"):
                              textfont=dict(size=10, color=FONT_COLOR)))
     fig.update_layout(xaxis_title="系统成本 (元/Wh)", yaxis_title="国内毛利率 (%)")
     if period == FORECAST_PERIOD:
-        fig.update_layout(title=dict(text="▨ 预测", font=dict(size=10, color="#FF7900"),
-                                     x=1, y=0.99, xanchor="right"))
-    return _base_layout(fig)
+        fig.add_annotation(
+            text="预测", xref="paper", yref="paper",
+            x=0.98, y=0.98, showarrow=False,
+            font=dict(size=10, color=ORANGE),
+            bgcolor="rgba(17,20,23,0.7)", bordercolor=ORANGE, borderwidth=1, borderpad=3
+        )
+    return _base_layout(fig, height=420)
 
 
 # ================================================================
@@ -388,7 +431,8 @@ def industry_chart(data_list, title=""):
         return go.Figure()
     df = pd.DataFrame(data_list)
     fig = px.line(df, x="period", y="metric_value", color="metric_name", title=title, markers=True)
-    return _base_layout(fig)
+    fig.update_layout(title=dict(text=title, font=dict(size=12, color=TITLE_COLOR)))
+    return _base_layout(fig, height=420)
 
 
 # ================================================================
@@ -410,14 +454,14 @@ def ranking_chart(rankings):
         v26 = [r.get("year_2026") or 0 for r in top10]
         traces.append(go.Bar(
             name="2026E", y=names, x=v26, orientation="h",
-            marker_color=f"rgba(255,121,0,{FORECAST_BAR_ALPHA})",
-            marker_line=dict(width=1.5, color="rgba(255,121,0,0.5)"),
-            marker_pattern_shape="/",
+            marker_color=hex_to_rgba(ORANGE, FORECAST_BAR_ALPHA),
+            marker_line=dict(width=1.5, color=ORANGE),
+            marker_pattern_shape="+",
         ))
 
     fig = go.Figure(data=traces)
     fig.update_layout(barmode="group", yaxis=dict(autorange="reversed"))
-    return _base_layout(fig)
+    return _base_layout(fig, height=460)
 
 
 # ================================================================
@@ -447,14 +491,14 @@ def company_trend_chart(data, periods, color, label="GWh", y_key="total"):
 
         fig.add_trace(go.Scatter(
             x=fcst_x, y=fcst_y, name=f"{label} (E)",
-            line=dict(color=hex_to_rgba(color, FORECAST_MARKER_ALPHA),
+            line=dict(color=hex_to_rgba(color, 0.70),
                       width=2.5, dash=FORECAST_DASH),
             mode="lines+markers",
-            marker=dict(size=5, color=hex_to_rgba(color, FORECAST_MARKER_ALPHA)),
+            marker=dict(size=5, color=hex_to_rgba(color, 0.70)),
             fill="tozeroy", fillcolor=hex_to_rgba(color, FORECAST_FILL_ALPHA),
         ))
 
-    return _base_layout(fig)
+    return _base_layout(fig, height=380)
 
 
 # ================================================================
@@ -477,7 +521,7 @@ def cost_price_chart(cost_data, periods, color):
         if any(v is not None for v in hist_vals):
             fig.add_trace(go.Scatter(
                 x=hist_ys, y=hist_vals, name=name,
-                line=dict(dash=dash_style, width=2), mode="lines+markers",
+                line=dict(dash=dash_style, width=2, color=color), mode="lines+markers",
                 legendgroup=name,
             ))
 
@@ -495,10 +539,10 @@ def cost_price_chart(cost_data, periods, color):
             fig.add_trace(go.Scatter(
                 x=fcst_x, y=fcst_y, name=f"{name} (E)",
                 line=dict(dash=dash_style, width=2,
-                          color=hex_to_rgba(color, FORECAST_MARKER_ALPHA)),
+                          color=hex_to_rgba(color, 0.70)),
                 mode="lines+markers",
-                marker=dict(size=5, color=hex_to_rgba(color, FORECAST_MARKER_ALPHA)),
+                marker=dict(size=5, color=hex_to_rgba(color, 0.70)),
                 legendgroup=name,
             ))
 
-    return _base_layout(fig)
+    return _base_layout(fig, height=420, y_title="元/Wh")

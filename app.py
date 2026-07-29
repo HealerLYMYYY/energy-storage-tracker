@@ -35,7 +35,7 @@ GLOBAL_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* ===== 品牌色系: 主橙 #FF7900 | 辅助 黄#EEB83F 绿#54B244 青#55BABE 蓝#6E92FF 深青#2B686F ===== */
+/* ===== 品牌色系: 主橙 #C9702A (克制琥珀) | 辅助 雾蓝#5A7A96 灰绿#7A9B76 雾紫#8B7DA8 暗红#B85C5C ===== */
 
 /* 根样式 */
 * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
@@ -56,13 +56,15 @@ h3 { font-size: 0.95rem !important; text-transform: uppercase; letter-spacing: 0
     color: #9a9a9a; font-size: 0.82rem; padding: 8px 14px; border-radius: 4px;
     transition: all 0.15s;
 }
-[data-testid="stSidebar"] .stButton > button:hover { background: #1a1e23; color: #FF7900; }
-[data-testid="stSidebar"] .stButton > button:has(div p:contains(">")) { color: #FF7900; background: rgba(255,121,0,0.08); }
+[data-testid="stSidebar"] .stButton > button:hover { background: #1a1e23; color: #C9702A; }
+[data-testid="stSidebar"] .stButton > button:has(div p:contains(">")) { color: #C9702A; background: rgba(201,112,42,0.08); }
 
 /* 按钮 */
 .stButton > button { border-radius: 4px; font-weight: 500; font-size: 0.82rem; letter-spacing: 0.02em; }
-.stButton > button[kind="primary"] { background: #FF7900; color: #FFFFFF; border: none; }
-.stButton > button[kind="primary"]:hover { background: #ff8f26; }
+.stButton > button[kind="primary"] { background: #C9702A; color: #FFFFFF; border: none; }
+.stButton > button[kind="primary"]:hover { background: #b06325; }
+.stButton > button[kind="secondary"] { background: #1a1e23; color: #9a9a9a; border: 1px solid #2a2f36; }
+.stButton > button[kind="secondary"]:hover { border-color: #C9702A; color: #C9702A; }
 
 /* 数据表 */
 [data-testid="stDataFrame"] { font-size: 0.78rem; }
@@ -74,11 +76,11 @@ hr { border-color: #2a2f36 !important; margin: 1rem 0 !important; }
 
 /* 输入框 */
 input, select, textarea { background: #111417 !important; border: 1px solid #3a4048 !important; color: #ECECEC !important; border-radius: 4px !important; }
-input:focus, select:focus { border-color: #FF7900 !important; box-shadow: 0 0 0 2px rgba(255,121,0,0.15) !important; }
+input:focus, select:focus { border-color: #C9702A !important; box-shadow: 0 0 0 2px rgba(201,112,42,0.15) !important; }
 
 /* 标签页 */
 .stTabs [data-baseweb="tab"] { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: #9a9a9a; }
-.stTabs [aria-selected="true"] { color: #FF7900 !important; border-bottom-color: #FF7900 !important; }
+.stTabs [aria-selected="true"] { color: #C9702A !important; border-bottom-color: #C9702A !important; }
 
 /* 展开器 */
 .streamlit-expanderHeader { font-size: 0.8rem; color: #9a9a9a; }
@@ -123,7 +125,7 @@ def render_sidebar():
         st.markdown(f"""
         <div style="padding: 12px 8px 16px 8px; border-bottom: 1px solid #2a2f36; margin-bottom: 12px;">
             <div style="font-size: 0.95rem; font-weight: 600; color: #ECECEC; letter-spacing: 0.02em;">
-                <span style="color:#FF7900;">■</span> 光储竞争情报</div>
+                <span style="color:#C9702A;">■</span> 光储竞争情报</div>
             <div style="font-size: 0.65rem; color: #9a9a9a; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px;">Competitive Intelligence</div>
         </div>""", unsafe_allow_html=True)
 
@@ -131,7 +133,7 @@ def render_sidebar():
         st.markdown(f"""
         <div style="padding: 10px 12px; background: #1a1e23; border: 1px solid #2a2f36; border-radius: 4px; margin-bottom: 14px;">
             <div style="font-size: 0.8rem; font-weight: 500; color: #ECECEC;">{user['display_name']}</div>
-            <div style="font-size: 0.62rem; color: #FF7900; text-transform: uppercase; letter-spacing: 0.08em;">{role_label}</div>
+            <div style="font-size: 0.62rem; color: #C9702A; text-transform: uppercase; letter-spacing: 0.08em;">{role_label}</div>
         </div>""", unsafe_allow_html=True)
 
         # 导航
