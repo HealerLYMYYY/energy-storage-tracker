@@ -18,9 +18,9 @@ def show_login():
     st.markdown("""
     <div class="login-card">
         <div style="text-align:center;margin-bottom:28px;">
-            <div style="font-size:2rem;color:#c9a96e;margin-bottom:4px;">◈</div>
-            <div style="font-size:1.1rem;font-weight:600;color:#e6edf3;letter-spacing:0.03em;">光储竞争情报</div>
-            <div style="font-size:0.65rem;color:#8b949e;text-transform:uppercase;letter-spacing:0.1em;margin-top:4px;">Competitive Intelligence Platform</div>
+            <div style="font-size:2rem;color:#C9702A;margin-bottom:4px;">◈</div>
+            <div style="font-size:1.1rem;font-weight:600;color:#1a1a2e;letter-spacing:0.03em;">光储竞争情报</div>
+            <div style="font-size:0.65rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.1em;margin-top:4px;">Competitive Intelligence Platform</div>
         </div>
     </div>""", unsafe_allow_html=True)
 
@@ -43,5 +43,5 @@ def show_login():
                     else:
                         st.error("用户名或密码错误")
 
-    st.markdown("""<div style="text-align:center;font-size:0.6rem;color:#30363d;margin-top:24px;text-transform:uppercase;letter-spacing:0.08em;">
+    st.markdown("""<div style="text-align:center;font-size:0.6rem;color:#9ca3af;margin-top:24px;text-transform:uppercase;letter-spacing:0.08em;">
     仅限授权人员 · 默认账号：admin / admin123</div>""", unsafe_allow_html=True)
