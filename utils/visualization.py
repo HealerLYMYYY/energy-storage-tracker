@@ -242,6 +242,7 @@ def quarterly_stack_chart(competitors, qdata_map, metric_label="GWh"):
         fig.add_trace(go.Bar(
             name=q, x=names, y=vals,
             marker_color=q_color,
+            width=0.45,
         ))
 
     fig.update_layout(barmode="stack")
@@ -267,7 +268,7 @@ def combo_annual_quarterly(annual_data, quarters_data, color, label="GWh", unit=
     fig.add_trace(go.Bar(
         x=categories, y=annual_vals, name=label,
         marker_color=color,
-        width=0.55,
+        width=0.45,
     ))
 
     # 2026E 季度堆积（历史年份为 0，2026E 位置堆积）
@@ -278,7 +279,7 @@ def combo_annual_quarterly(annual_data, quarters_data, color, label="GWh", unit=
         fig.add_trace(go.Bar(
             x=categories, y=vals, name=q,
             marker_color=q_color,
-            width=0.55,
+            width=0.45,
         ))
 
     fig.update_layout(

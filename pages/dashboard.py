@@ -104,7 +104,7 @@ def show_dashboard():
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     # ——— 图表行 2：2026E 季度堆积（核心） ———
-    st.markdown('<h3>2026E 季度出货量 · 堆积图（Q1+Q2+Q3+Q4 = 全年）</h3>', unsafe_allow_html=True)
+    st.markdown('<h3>2026E 季度出货量</h3>', unsafe_allow_html=True)
     top5_cids = {"catl", "byd", "hb", "hc", "tesla"}
     top5 = [c for c in competitors if c["cid"] in top5_cids]
     fig_q = quarterly_stack_chart(top5, ship_q_map, "GWh")

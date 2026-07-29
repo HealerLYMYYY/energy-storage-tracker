@@ -107,7 +107,7 @@ def show_company():
         # ——— 第一行：出货量组合图 + 区域结构 ———
         col_a, col_b = st.columns(2)
         with col_a:
-            st.markdown('<h3>出货量：历史年度 + 2026E 季度堆积</h3>', unsafe_allow_html=True)
+            st.markdown('<h3>出货量：历史年度 + 2026E</h3>', unsafe_allow_html=True)
             fig = combo_annual_quarterly(ship_annual, ship_q, comp["color"], "出货量", "GWh")
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
@@ -134,12 +134,12 @@ def show_company():
         # ——— 第二行：营收组合图 + 净利润组合图 ———
         col_c, col_d = st.columns(2)
         with col_c:
-            st.markdown('<h3>营收：历史年度 + 2026E 季度堆积</h3>', unsafe_allow_html=True)
+            st.markdown('<h3>营收：历史年度 + 2026E</h3>', unsafe_allow_html=True)
             fig_rv = combo_annual_quarterly(rev_annual, rev_q, comp["color"], "营收", "亿元")
             st.plotly_chart(fig_rv, use_container_width=True, config={'displayModeBar': False})
 
         with col_d:
-            st.markdown('<h3>净利润：历史年度 + 2026E 季度堆积</h3>', unsafe_allow_html=True)
+            st.markdown('<h3>净利润：历史年度 + 2026E</h3>', unsafe_allow_html=True)
             fig_np = combo_annual_quarterly(np_annual, np_q, comp["color"], "净利润", "亿元")
             st.plotly_chart(fig_np, use_container_width=True, config={'displayModeBar': False})
 
