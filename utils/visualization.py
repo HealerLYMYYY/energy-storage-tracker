@@ -219,31 +219,32 @@ def fin_bar_chart(competitors, data_map, field="revenue", year1="2024", year2="2
 # ================================================================
 
 def quarterly_stack_chart(competitors, qdata_map, metric_label="GWh"):
-    """x = Q1..Q4，每个季度的柱子按公司堆积。
-    已完成季度用公司原色，未来季度用 pastel 浅色（预测）。"""
+    """以公司为 X 轴，每家公司一根堆积柱，柱内按 Q1-Q4 分段。
+    已完成季度用实色，未来季度用浅色（预测）。
+    这才是正确的竞对分析视角：先看公司维度，再看季度拆分。"""
     quarters = ["Q1", "Q2", "Q3", "Q4"]
     completed = current_completed_quarters()
+    names = [c["name"] for c in competitors]
+
     fig = go.Figure()
 
-    for comp in competitors:
-        qd = qdata_map.get(comp["cid"], {})
-        vals = [qd.get(q) or 0 for q in quarters]
+    for qi, q in enumerate(quarters):
+        vals = []
+        for comp in competitors:
+            qd = qdata_map.get(comp["cid"], {})
+            vals.append(qd.get(q) or 0)
+
         if not any(vals):
             continue
-        base_color = comp["color"]
-        bar_colors = []
-        for q in quarters:
-            if q in completed:
-                bar_colors.append(base_color)
-            else:
-                bar_colors.append(hex_to_rgba(base_color, 0.45))
+
+        # 已完成季度用季度色，未来季度用浅色
+        q_color = Q_COLORS[q] if q in completed else Q_COLORS_FUTURE[q]
         fig.add_trace(go.Bar(
-            name=comp["name"], x=quarters, y=vals,
-            marker=dict(color=bar_colors),
+            name=q, x=names, y=vals,
+            marker_color=q_color,
         ))
 
     fig.update_layout(barmode="stack")
-    # 在图表内部右下角加小标签，不占用顶部空间
     fig.add_annotation(
         text="▨ 浅色 = 未来季度预测", xref="paper", yref="paper",
         x=0.99, y=0.02, showarrow=False, xanchor="right", yanchor="bottom",
@@ -278,7 +279,7 @@ def combo_annual_quarterly(annual_data, quarters_data, color, label="GWh", unit=
         v = quarters_data.get(q)
         q_color = Q_COLORS[q] if q in completed else Q_COLORS_FUTURE[q]
         fig.add_trace(go.Bar(
-            x=["2026E"], y=[v or 0], name=f"2026 {q}",
+            x=["2026E"], y=[v or 0], name=q,
             marker_color=q_color,
             width=0.55,
         ))
