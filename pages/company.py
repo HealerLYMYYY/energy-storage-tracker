@@ -75,14 +75,14 @@ def show_company():
     # ——— 公司头部 ———
     st.markdown(f"""
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-        <div style="width:48px;height:48px;border:1px solid {comp['color']};border-radius:6px;background:#1a1e23;
+        <div style="width:48px;height:48px;border:1px solid {comp['color']};border-radius:6px;background:#FFF8F2;
                     display:flex;align-items:center;justify-content:center;color:{comp['color']};font-size:1.2rem;font-weight:600;">
             {comp['name'][0]}</div>
         <div>
-            <div style="font-size:1.15rem;font-weight:600;color:#ECECEC;">{comp['name']}
-                <span style="font-size:0.7rem;color:#9a9a9a;margin-left:10px;">{comp['ticker']}</span>
+            <div style="font-size:1.15rem;font-weight:600;color:#1a1a2e;">{comp['name']}
+                <span style="font-size:0.7rem;color:#9ca3af;margin-left:10px;">{comp['ticker']}</span>
             </div>
-            <div style="font-size:0.72rem;color:#9a9a9a;">{comp['company_type']} · {comp['description'][:70]}...</div>
+            <div style="font-size:0.72rem;color:#6b7280;">{comp['company_type']} · {comp['description'][:70]}...</div>
         </div>
     </div>""", unsafe_allow_html=True)
 
@@ -123,11 +123,11 @@ def show_company():
                 barmode="stack", height=420,
                 margin=dict(l=20, r=20, t=40, b=20),
                 plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-                font=dict(color="#9a9a9a", size=11),
+                font=dict(color="#6b7280", size=11),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
-                            font=dict(color="#9a9a9a", size=10), bgcolor="rgba(0,0,0,0)"),
-                xaxis=dict(gridcolor="rgba(58,64,72,0.35)", zeroline=False),
-                yaxis=dict(gridcolor="rgba(58,64,72,0.35)", zeroline=False, title="GWh")
+                            font=dict(color="#4b5563", size=10), bgcolor="rgba(0,0,0,0)"),
+                xaxis=dict(gridcolor="#e5e7eb", zeroline=False),
+                yaxis=dict(gridcolor="#e5e7eb", zeroline=False, title="GWh")
             )
             st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
 

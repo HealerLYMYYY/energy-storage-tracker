@@ -8,17 +8,17 @@ from utils.visualization import (ship_trend_chart, ship_stack_chart, quarterly_s
 
 
 def _card(name, ticker, value, delta, color):
-    delta_color = color if delta and delta > 0 else "#9a9a9a"
+    delta_color = color if delta and delta > 0 else "#6b7280"
     delta_str = f"{delta:+.1f}%" if delta else "—"
     value_str = f"{value:.1f}" if value else "—"
     return f"""
-    <div style="background:#1a1e23;border:1px solid #2a2f36;border-radius:6px;padding:14px 8px;text-align:center;
+    <div style="background:#FFFFFF;border:1px solid #e5e7eb;border-radius:8px;padding:14px 8px;text-align:center;
                 border-top:3px solid {color};min-height:110px;display:flex;flex-direction:column;justify-content:center;">
-        <div style="font-size:0.78rem;font-weight:600;color:#ECECEC;">{name}</div>
-        <div style="font-size:0.6rem;color:#9a9a9a;margin-top:2px;">{ticker}</div>
-        <div style="font-size:1.05rem;font-weight:600;color:#ECECEC;margin-top:8px;font-family:'JetBrains Mono',monospace;">
+        <div style="font-size:0.78rem;font-weight:600;color:#1a1a2e;">{name}</div>
+        <div style="font-size:0.6rem;color:#9ca3af;margin-top:2px;">{ticker}</div>
+        <div style="font-size:1.05rem;font-weight:600;color:#1a1a2e;margin-top:8px;font-family:'JetBrains Mono',monospace;">
             {value_str}</div>
-        <div style="font-size:0.6rem;color:#9a9a9a;margin-top:2px;">GWh (2026E)</div>
+        <div style="font-size:0.6rem;color:#9ca3af;margin-top:2px;">GWh (2026E)</div>
         <div style="font-size:0.65rem;color:{delta_color};margin-top:2px;font-weight:500;">{delta_str}</div>
     </div>"""
 

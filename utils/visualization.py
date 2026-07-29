@@ -8,20 +8,20 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 
-# ——— 主题常量 ———
+# ——— 主题常量（浅色主题） ———
 BG = "rgba(0,0,0,0)"
-FONT_COLOR = "#9a9a9a"
-TITLE_COLOR = "#ECECEC"
-GRID_COLOR = "rgba(58,64,72,0.35)"
+FONT_COLOR = "#6b7280"
+TITLE_COLOR = "#1a1a2e"
+GRID_COLOR = "#e5e7eb"
 MARGIN = dict(l=20, r=20, t=50, b=20)
 LEGEND_TOP = dict(
     orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
-    font=dict(color=FONT_COLOR, size=10), bgcolor="rgba(0,0,0,0)",
+    font=dict(color="#4b5563", size=10), bgcolor="rgba(0,0,0,0)",
     bordercolor="rgba(0,0,0,0)", borderwidth=0
 )
 LEGEND_RIGHT = dict(
     orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.02,
-    font=dict(color=FONT_COLOR, size=10), bgcolor="rgba(0,0,0,0)"
+    font=dict(color="#4b5563", size=10), bgcolor="rgba(0,0,0,0)"
 )
 
 # ——— 品牌色板（莫兰迪 / 低饱和） ———
@@ -175,7 +175,7 @@ def ship_stack_chart(competitors, data_map, period="2025", mode="region"):
             text="预测", xref="paper", yref="paper",
             x=0.98, y=0.98, showarrow=False,
             font=dict(size=10, color=ORANGE),
-            bgcolor="rgba(17,20,23,0.7)", bordercolor=ORANGE, borderwidth=1, borderpad=3
+            bgcolor="rgba(255,255,255,0.8)", bordercolor=ORANGE, borderwidth=1, borderpad=3
         )
     return _base_layout(fig, height=380, y_title="GWh")
 
@@ -209,7 +209,7 @@ def fin_bar_chart(competitors, data_map, field="revenue", year1="2024", year2="2
             text="预测", xref="paper", yref="paper",
             x=0.98, y=0.98, showarrow=False,
             font=dict(size=10, color=ORANGE),
-            bgcolor="rgba(17,20,23,0.7)", bordercolor=ORANGE, borderwidth=1, borderpad=3
+            bgcolor="rgba(255,255,255,0.8)", bordercolor=ORANGE, borderwidth=1, borderpad=3
         )
     return _base_layout(fig, height=380)
 
@@ -249,7 +249,7 @@ def quarterly_stack_chart(competitors, qdata_map, metric_label="GWh"):
         text="▨ 浅色 = 未来季度预测", xref="paper", yref="paper",
         x=0.99, y=0.02, showarrow=False, xanchor="right", yanchor="bottom",
         font=dict(size=9, color=FONT_COLOR),
-        bgcolor="rgba(17,20,23,0.6)", borderpad=3
+        bgcolor="rgba(255,255,255,0.8)", borderpad=3
     )
     return _base_layout(fig, height=420, y_title=metric_label)
 
@@ -357,7 +357,7 @@ def margin_quarterly_chart(fin_2026, hist_fin, color):
         text="虚线/浅色 = 预测", xref="paper", yref="paper",
         x=0.99, y=0.02, showarrow=False, xanchor="right", yanchor="bottom",
         font=dict(size=9, color=FONT_COLOR),
-        bgcolor="rgba(17,20,23,0.6)", borderpad=3
+        bgcolor="rgba(255,255,255,0.8)", borderpad=3
     )
 
     return _base_layout(fig, height=420, y_title="%")
@@ -392,7 +392,7 @@ def qtr_bar_chart(competitors, data_map, field="rv", year="2025"):
             text="预测", xref="paper", yref="paper",
             x=0.98, y=0.98, showarrow=False,
             font=dict(size=10, color=ORANGE),
-            bgcolor="rgba(17,20,23,0.7)", bordercolor=ORANGE, borderwidth=1, borderpad=3
+            bgcolor="rgba(255,255,255,0.8)", bordercolor=ORANGE, borderwidth=1, borderpad=3
         )
     return _base_layout(fig, height=380)
 
@@ -410,7 +410,7 @@ def cost_margin_scatter(competitors, cost_map, margin_map, period="2025"):
             ys.append(co.get("domestic_margin") or 0); colors.append(c["color"])
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=xs, y=ys, mode="markers+text", text=names, textposition="top center",
-                             marker=dict(size=12, color=colors, line=dict(width=1, color="#2a2f36")),
+                             marker=dict(size=12, color=colors, line=dict(width=1, color="#d1d5db")),
                              textfont=dict(size=10, color=FONT_COLOR)))
     fig.update_layout(xaxis_title="系统成本 (元/Wh)", yaxis_title="国内毛利率 (%)")
     if period == FORECAST_PERIOD:
@@ -418,7 +418,7 @@ def cost_margin_scatter(competitors, cost_map, margin_map, period="2025"):
             text="预测", xref="paper", yref="paper",
             x=0.98, y=0.98, showarrow=False,
             font=dict(size=10, color=ORANGE),
-            bgcolor="rgba(17,20,23,0.7)", bordercolor=ORANGE, borderwidth=1, borderpad=3
+            bgcolor="rgba(255,255,255,0.8)", bordercolor=ORANGE, borderwidth=1, borderpad=3
         )
     return _base_layout(fig, height=420)
 
