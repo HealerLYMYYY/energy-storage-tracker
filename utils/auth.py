@@ -1,18 +1,15 @@
 """
 光储竞对分析系统 - 认证模块
-自动适配 SQLite(?) 和 PostgreSQL(%s) 占位符
 """
 
 import bcrypt
 import streamlit as st
 from datetime import datetime
-from utils.database import get_connection, USE_PG
+from utils.database import get_connection
 
 
 def _q(sql):
     """替换占位符"""
-    if USE_PG:
-        return sql.replace("?", "%s")
     return sql
 
 
@@ -103,8 +100,6 @@ def update_user(user_id, **kw):
     try:
         with get_connection() as conn:
             set_clause = ", ".join(f"{k}=?" for k in updates)
-            if USE_PG:
-                set_clause = set_clause.replace("?", "%s")
             conn.execute(f"UPDATE users SET {set_clause} WHERE id=?", (*updates.values(), user_id))
             conn.commit()
             return True, "更新成功"
