@@ -2,23 +2,30 @@
 光储竞争情报系统 - 机构级仪表盘
 """
 
+import sys
+import traceback
 import streamlit as st
 
 st.set_page_config(page_title="光储竞争情报", page_icon="*", layout="wide",
                    initial_sidebar_state="expanded")
 
-from utils.database import init_db
-from utils.auth import init_auth, logout
+try:
+    from utils.database import init_db
+    from utils.auth import init_auth, logout
 
-from pages.login import show_login
-from pages.dashboard import show_dashboard
-from pages.company import show_company
-from pages.compare import show_compare
-from pages.ranking import show_ranking
-from pages.industry import show_industry
-from pages.data_entry import show_data_entry
-from pages.accounts import show_accounts
-from pages.db_config import show_db_config
+    from pages.login import show_login
+    from pages.dashboard import show_dashboard
+    from pages.company import show_company
+    from pages.compare import show_compare
+    from pages.ranking import show_ranking
+    from pages.industry import show_industry
+    from pages.data_entry import show_data_entry
+    from pages.accounts import show_accounts
+    from pages.db_config import show_db_config
+except Exception as e:
+    st.error(f"模块加载失败: {e}")
+    st.code(traceback.format_exc())
+    st.stop()
 
 PAGE_FUNCTIONS = {
     "dashboard": show_dashboard,
@@ -96,9 +103,15 @@ def main():
         init_db()
     except Exception as e:
         st.error(f"数据库初始化失败: {e}")
+        st.code(traceback.format_exc())
         return
 
-    init_auth()
+    try:
+        init_auth()
+    except Exception as e:
+        st.error(f"认证初始化失败: {e}")
+        st.code(traceback.format_exc())
+        return
 
     if not st.session_state.authenticated:
         show_login()

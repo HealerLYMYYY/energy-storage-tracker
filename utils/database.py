@@ -14,13 +14,30 @@ DB_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 DB_PATH = os.path.join(DB_DIR, "energy_storage.db")
 DATA_DIR = DB_DIR  # CSV 和 DB 同目录
 
+
+def _get_writable_db_path():
+    """获取可写的数据库路径，如果 data/ 不可写则回退到 /tmp"""
+    try:
+        os.makedirs(DB_DIR, exist_ok=True)
+        test_file = os.path.join(DB_DIR, ".write_test")
+        with open(test_file, "w") as f:
+            f.write("ok")
+        os.remove(test_file)
+        return DB_PATH
+    except Exception:
+        fallback_dir = "/tmp/energy_storage_data"
+        os.makedirs(fallback_dir, exist_ok=True)
+        return os.path.join(fallback_dir, "energy_storage.db")
+
 # ============================================================
 #  初始化
 # ============================================================
 
 def init_db():
     """从 CSV 加载数据到 SQLite"""
-    os.makedirs(DB_DIR, exist_ok=True)
+    global DB_PATH
+    DB_PATH = _get_writable_db_path()
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     with _get_sqlite() as conn:
         _create_tables(conn)
         conn.commit()
@@ -202,8 +219,9 @@ def _safe_float(v):
 def export_all_csv():
     """将所有数据从 SQLite 导出到 CSV 文件"""
     os.makedirs(DATA_DIR, exist_ok=True)
-    with _get_sqlite() as conn:
-        c = conn.cursor()
+    try:
+        with _get_sqlite() as conn:
+            c = conn.cursor()
 
         # 竞对公司（从 SQLite 读取完整数据）
         rows = c.execute("SELECT cid,name,name_en,ticker,company_type,color,keywords,description,website,sort_order FROM competitors ORDER BY sort_order").fetchall()
@@ -254,6 +272,9 @@ def export_all_csv():
         _write_csv("ranking_data.csv",
                    ["company_name","year_2024","year_2025","year_2026","americas","emea","china","asia_pacific"],
                    [dict(r) for r in rows])
+    except Exception as e:
+        print(f"[DB] CSV 导出失败: {e}")
+        raise
 
 
 def _write_csv(filename, columns, rows):
@@ -275,6 +296,12 @@ def git_commit_and_push(message="数据更新"):
     """将 data/ 目录下的 CSV 文件 commit 并 push 到 GitHub"""
     repo_dir = os.path.dirname(DB_DIR)
     try:
+        # 检查是否有 git 仓库
+        result = subprocess.run(["git", "-C", repo_dir, "rev-parse", "--git-dir"],
+                                capture_output=True, text=True, timeout=5)
+        if result.returncode != 0:
+            return False, "当前目录不是 Git 仓库"
+
         subprocess.run(["git", "-C", repo_dir, "add", "data/*.csv"],
                        capture_output=True, timeout=10)
         result = subprocess.run(
@@ -282,11 +309,17 @@ def git_commit_and_push(message="数据更新"):
             capture_output=True, timeout=10, text=True
         )
         # 如果有变更才 push
-        if "nothing to commit" not in result.stdout and "nothing to commit" not in result.stderr:
-            subprocess.run(["git", "-C", repo_dir, "push", "origin", "main"],
-                           capture_output=True, timeout=30)
-            return True, "已同步到 GitHub"
-        return True, "无变更"
+        if result.returncode == 0:
+            push_result = subprocess.run(["git", "-C", repo_dir, "push", "origin", "main"],
+                           capture_output=True, text=True, timeout=30)
+            if push_result.returncode == 0:
+                return True, "已同步到 GitHub"
+            else:
+                return False, f"Push 失败: {push_result.stderr}"
+        elif "nothing to commit" in result.stdout or "nothing to commit" in result.stderr:
+            return True, "无变更"
+        else:
+            return False, f"Commit 失败: {result.stderr}"
     except Exception as e:
         return False, f"Git 操作失败: {e}"
 

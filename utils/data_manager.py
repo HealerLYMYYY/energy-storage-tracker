@@ -7,14 +7,11 @@ from utils.database import get_connection, export_all_csv, git_commit_and_push
 
 
 def _sync_to_github(message="数据更新"):
-    """每次写操作后自动导出 CSV 并推送到 GitHub"""
+    """每次写操作后自动导出 CSV 并推送到 GitHub（不阻塞主流程）"""
     try:
         export_all_csv()
         ok, msg = git_commit_and_push(message)
-        if ok:
-            print(f"[Sync] {msg}")
-        else:
-            print(f"[Sync] {msg}")
+        print(f"[Sync] {msg}")
     except Exception as e:
         print(f"[Sync] 同步失败: {e}")
 
