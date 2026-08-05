@@ -19,11 +19,15 @@ except ImportError:
 
 DB_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 DB_PATH = os.path.join(DB_DIR, "energy_storage.db")
-DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 USE_PG = False
 PG_AVAILABLE = False
 PG_ERROR_MSG = None
+
+
+def get_database_url():
+    """动态读取 DATABASE_URL（支持运行时更新）"""
+    return os.environ.get("DATABASE_URL", "")
 
 
 def _fix_pg_url(url):
@@ -56,8 +60,9 @@ def init_db():
     """初始化数据库。优先 PG，失败则降级 SQLite（永不崩溃）"""
     global USE_PG, PG_AVAILABLE, PG_ERROR_MSG
 
-    if DATABASE_URL:
-        url = _fix_pg_url(DATABASE_URL)
+    db_url = get_database_url()
+    if db_url:
+        url = _fix_pg_url(db_url)
         ok, err = _test_pg_connection(url, timeout=8)
         if ok:
             USE_PG = True
@@ -85,6 +90,18 @@ def init_db():
     except Exception as e:
         # 如果连 SQLite 都失败，也抛出，但这种情况极少
         raise RuntimeError(f"数据库初始化完全失败: {e}") from e
+
+
+def reinit_db():
+    """重新初始化数据库连接（用于运行时切换 DATABASE_URL）"""
+    global USE_PG, PG_AVAILABLE, PG_ERROR_MSG
+    # 重置状态
+    USE_PG = False
+    PG_AVAILABLE = False
+    PG_ERROR_MSG = None
+    # 重新初始化
+    init_db()
+    return USE_PG, PG_AVAILABLE, PG_ERROR_MSG
 
 
 # ============================================================
@@ -180,7 +197,7 @@ def _init_pg():
 
 @contextmanager
 def _get_pg():
-    url = _fix_pg_url(DATABASE_URL)
+    url = _fix_pg_url(get_database_url())
     conn = psycopg2.connect(url, connect_timeout=10)
     conn.autocommit = False
     conn.cursor_factory = psycopg2.extras.RealDictCursor
@@ -260,7 +277,7 @@ def get_connection():
     global USE_PG
     if USE_PG:
         try:
-            url = _fix_pg_url(DATABASE_URL)
+            url = _fix_pg_url(get_database_url())
             conn = psycopg2.connect(url, connect_timeout=5)
             conn.autocommit = False
             conn.cursor_factory = psycopg2.extras.RealDictCursor

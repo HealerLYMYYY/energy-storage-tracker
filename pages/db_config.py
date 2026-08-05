@@ -2,7 +2,7 @@
 
 import streamlit as st
 import os
-from utils.database import _test_pg_connection, _fix_pg_url, USE_PG, PG_AVAILABLE, PG_ERROR_MSG, DATABASE_URL
+from utils.database import _test_pg_connection, _fix_pg_url, USE_PG, PG_AVAILABLE, PG_ERROR_MSG, get_database_url, reinit_db
 from utils.auth import check_permission
 
 
@@ -23,7 +23,8 @@ def show_db_config():
         mode = "PostgreSQL" if USE_PG else "SQLite"
         st.metric("运行模式", mode)
     with col3:
-        url_display = DATABASE_URL[:50] + "..." if len(DATABASE_URL) > 50 else DATABASE_URL or "未配置"
+        db_url = get_database_url()
+        url_display = db_url[:50] + "..." if len(db_url) > 50 else db_url or "未配置"
         st.metric("连接字符串", url_display)
 
     if PG_ERROR_MSG:
@@ -43,7 +44,7 @@ def show_db_config():
     with st.form("db_config_form"):
         new_url = st.text_input(
             "DATABASE_URL",
-            value=DATABASE_URL,
+            value=get_database_url(),
             type="password",
             help="格式：postgresql://postgres:密码@db.xxx.supabase.co:5432/postgres"
         )
@@ -70,10 +71,17 @@ def show_db_config():
                     """)
 
         if save_btn and new_url:
-            # 保存到环境变量（仅当前会话有效）
+            # 保存到环境变量
             os.environ["DATABASE_URL"] = new_url
-            st.success("已保存到当前会话！刷新页面后生效。")
-            st.info("注意：此配置仅保存在服务器内存中，重启后失效。要永久生效，请同时配置 Streamlit Cloud Secrets。")
+            # 重新初始化数据库连接
+            with st.spinner("正在重新连接数据库..."):
+                use_pg, pg_ok, pg_err = reinit_db()
+                if use_pg and pg_ok:
+                    st.success("已切换至 PostgreSQL 模式！数据将持久化保存到 Supabase。")
+                elif pg_err:
+                    st.warning(f"PostgreSQL 连接失败 ({pg_err})，已降级至 SQLite 模式。请检查连接字符串。")
+                else:
+                    st.info("已使用 SQLite 模式。")
 
     st.divider()
 
@@ -89,19 +97,28 @@ def show_db_config():
 
     if st.button("使用此配置", use_container_width=True):
         os.environ["DATABASE_URL"] = quick_url
-        st.success("已应用！请点击上方「测试连接」验证")
+        with st.spinner("正在重新连接数据库..."):
+            use_pg, pg_ok, pg_err = reinit_db()
+            if use_pg and pg_ok:
+                st.success("已切换至 PostgreSQL 模式！")
+            elif pg_err:
+                st.warning(f"PostgreSQL 连接失败 ({pg_err})，已降级至 SQLite 模式。")
+            else:
+                st.info("已使用 SQLite 模式。")
 
     st.divider()
 
     # 手动配置指南
     with st.expander("手动配置 Streamlit Cloud Secrets（永久生效）"):
-        st.markdown("""
+        db_url = get_database_url()
+        secret_url = db_url or "postgresql://postgres:你的密码@db.hkeigpktrtptgtjvhwyt.supabase.co:5432/postgres?sslmode=require"
+        st.markdown(f"""
         1. 打开 [share.streamlit.io](https://share.streamlit.io)
         2. 找到你的应用 → 右下角 **⋮** → **Settings** → **Secrets**
         3. 粘贴以下内容：
 
         ```toml
-        DATABASE_URL = "postgresql://postgres:你的密码@db.hkeigpktrtptgtjvhwyt.supabase.co:5432/postgres?sslmode=require"
+        DATABASE_URL = "{secret_url}"
         ```
 
         4. 保存后应用会自动重新部署
