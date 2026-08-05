@@ -1,22 +1,30 @@
 """
 光储竞对分析系统 - 数据访问层
-自动适配 SQLite(?) 和 PostgreSQL(%s) 占位符
+SQLite 本地存储 + CSV 导出 + Git 自动同步
 """
 
-from utils.database import get_connection, USE_PG
+from utils.database import get_connection, export_all_csv, git_commit_and_push
+
+
+def _sync_to_github(message="数据更新"):
+    """每次写操作后自动导出 CSV 并推送到 GitHub"""
+    try:
+        export_all_csv()
+        ok, msg = git_commit_and_push(message)
+        if ok:
+            print(f"[Sync] {msg}")
+        else:
+            print(f"[Sync] {msg}")
+    except Exception as e:
+        print(f"[Sync] 同步失败: {e}")
 
 
 def _ph(count):
     """返回占位符字符串"""
-    if USE_PG:
-        return ",".join(["%s"] * count)
     return ",".join(["?"] * count)
 
 
 def _q(sql):
-    """替换占位符"""
-    if USE_PG:
-        return sql.replace("?", "%s")
     return sql
 
 
@@ -159,6 +167,7 @@ def save_shipment(cid, period, data):
         else:
             conn.execute(_q("INSERT INTO shipment_data (competitor_id,period,total_gwh,domestic_gwh,export_gwh,residential_gwh,utility_gwh,commercial_gwh) VALUES (?,?,?,?,?,?,?,?)"), vals)
         conn.commit()
+        _sync_to_github(f"更新出货量 {cid}/{period}")
         return True, "保存成功"
 
 
@@ -201,6 +210,7 @@ def save_financial(cid, period, data):
                 revenue_q1,revenue_q2,revenue_q3,revenue_q4,
                 net_profit_q1,net_profit_q2,net_profit_q3,net_profit_q4) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""), vals)
         conn.commit()
+        _sync_to_github(f"更新财务 {cid}/{period}")
         return True, "保存成功"
 
 
@@ -224,6 +234,7 @@ def save_industry_data(category, metric_name, metric_value, unit, period, region
                 (category, metric_name, metric_value, unit, period, region, notes)
             )
         conn.commit()
+        _sync_to_github(f"更新行业数据 {category}/{metric_name}/{period}")
         return True, "保存成功"
 
 
@@ -231,6 +242,7 @@ def delete_industry_data(item_id):
     with get_connection() as conn:
         conn.execute(_q("DELETE FROM industry_data WHERE id=?"), (item_id,))
         conn.commit()
+        _sync_to_github("删除行业数据")
         return True, "已删除"
 
 
@@ -263,6 +275,7 @@ def save_ranking(company_name, year_2024=None, year_2025=None, year_2026=None,
                 vals
             )
         conn.commit()
+        _sync_to_github(f"更新排名 {company_name}")
         return True, "保存成功"
 
 
@@ -270,4 +283,5 @@ def delete_ranking(item_id):
     with get_connection() as conn:
         conn.execute(_q("DELETE FROM ranking_data WHERE id=?"), (item_id,))
         conn.commit()
+        _sync_to_github("删除排名数据")
         return True, "已删除"

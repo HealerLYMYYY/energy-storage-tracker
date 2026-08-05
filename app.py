@@ -7,7 +7,7 @@ import streamlit as st
 st.set_page_config(page_title="光储竞争情报", page_icon="*", layout="wide",
                    initial_sidebar_state="expanded")
 
-from utils.database import init_db, PG_AVAILABLE, PG_ERROR_MSG, USE_PG
+from utils.database import init_db
 from utils.auth import init_auth, logout
 
 from pages.login import show_login
@@ -105,12 +105,6 @@ def main():
         return
 
     st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
-
-    # 数据库状态提示
-    if not PG_AVAILABLE and USE_PG:
-        st.warning(f"注意：PostgreSQL 连接失败，已自动降级到本地 SQLite。数据不会跨设备同步。\n\n> 错误：`{PG_ERROR_MSG}`")
-    elif not USE_PG:
-        st.info("提示：未配置 DATABASE_URL 或连接失败，使用本地 SQLite。配置正确的 Supabase 后可实现数据持久化和多设备同步。")
 
     render_sidebar()
     render_content()
