@@ -202,3 +202,72 @@ def save_financial(cid, period, data):
                 net_profit_q1,net_profit_q2,net_profit_q3,net_profit_q4) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""), vals)
         conn.commit()
         return True, "保存成功"
+
+
+# ========== 行业数据 ==========
+
+def save_industry_data(category, metric_name, metric_value, unit, period, region="全球", notes=None):
+    """新增或更新一条行业数据"""
+    with get_connection() as conn:
+        existing = conn.execute(
+            _q("SELECT id FROM industry_data WHERE category=? AND metric_name=? AND period=? AND region=?"),
+            (category, metric_name, period, region)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                _q("UPDATE industry_data SET metric_value=?,unit=?,notes=? WHERE id=?"),
+                (metric_value, unit, notes, existing["id"])
+            )
+        else:
+            conn.execute(
+                _q("INSERT INTO industry_data (category,metric_name,metric_value,unit,period,region,notes) VALUES (?,?,?,?,?,?,?)"),
+                (category, metric_name, metric_value, unit, period, region, notes)
+            )
+        conn.commit()
+        return True, "保存成功"
+
+
+def delete_industry_data(item_id):
+    with get_connection() as conn:
+        conn.execute(_q("DELETE FROM industry_data WHERE id=?"), (item_id,))
+        conn.commit()
+        return True, "已删除"
+
+
+def get_industry_categories():
+    """获取所有已有的 category + metric_name 组合（用于下拉列表）"""
+    with get_connection() as conn:
+        rows = conn.execute("SELECT DISTINCT category, metric_name FROM industry_data ORDER BY category").fetchall()
+        return [dict(r) for r in rows]
+
+
+# ========== 行业排名 ==========
+
+def save_ranking(company_name, year_2024=None, year_2025=None, year_2026=None,
+                 americas=None, emea=None, china=None, asia_pacific=None):
+    """新增或更新一条排名数据"""
+    with get_connection() as conn:
+        existing = conn.execute(
+            _q("SELECT id FROM ranking_data WHERE company_name=?"),
+            (company_name,)
+        ).fetchone()
+        vals = (company_name, year_2024, year_2025, year_2026, americas, emea, china, asia_pacific)
+        if existing:
+            conn.execute(
+                _q("UPDATE ranking_data SET company_name=?,year_2024=?,year_2025=?,year_2026=?,americas=?,emea=?,china=?,asia_pacific=? WHERE id=?"),
+                (*vals, existing["id"])
+            )
+        else:
+            conn.execute(
+                _q("INSERT INTO ranking_data (company_name,year_2024,year_2025,year_2026,americas,emea,china,asia_pacific) VALUES (?,?,?,?,?,?,?,?)"),
+                vals
+            )
+        conn.commit()
+        return True, "保存成功"
+
+
+def delete_ranking(item_id):
+    with get_connection() as conn:
+        conn.execute(_q("DELETE FROM ranking_data WHERE id=?"), (item_id,))
+        conn.commit()
+        return True, "已删除"
