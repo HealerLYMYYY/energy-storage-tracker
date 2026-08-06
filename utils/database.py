@@ -302,16 +302,27 @@ def git_commit_and_push(message="数据更新"):
         if result.returncode != 0:
             return False, "当前目录不是 Git 仓库"
 
+        # 设置 commit 作者（避免 Streamlit Cloud 未配置 git identity）
+        env = os.environ.copy()
+        if not os.environ.get("GIT_AUTHOR_NAME"):
+            env["GIT_AUTHOR_NAME"] = "Energy Tracker"
+        if not os.environ.get("GIT_AUTHOR_EMAIL"):
+            env["GIT_AUTHOR_EMAIL"] = "energy-tracker@streamlit.app"
+        if not os.environ.get("GIT_COMMITTER_NAME"):
+            env["GIT_COMMITTER_NAME"] = env["GIT_AUTHOR_NAME"]
+        if not os.environ.get("GIT_COMMITTER_EMAIL"):
+            env["GIT_COMMITTER_EMAIL"] = env["GIT_AUTHOR_EMAIL"]
+
         subprocess.run(["git", "-C", repo_dir, "add", "data/*.csv"],
-                       capture_output=True, timeout=10)
+                       capture_output=True, timeout=10, env=env)
         result = subprocess.run(
             ["git", "-C", repo_dir, "commit", "-m", f"data: {message}"],
-            capture_output=True, timeout=10, text=True
+            capture_output=True, timeout=10, text=True, env=env
         )
         # 如果有变更才 push
         if result.returncode == 0:
             push_result = subprocess.run(["git", "-C", repo_dir, "push", "origin", "main"],
-                           capture_output=True, text=True, timeout=30)
+                           capture_output=True, text=True, timeout=30, env=env)
             if push_result.returncode == 0:
                 return True, "已同步到 GitHub"
             else:
